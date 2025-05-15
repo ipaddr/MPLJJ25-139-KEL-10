@@ -130,7 +130,6 @@ class _MenuCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.route,
-    super.key,
   });
 
   @override

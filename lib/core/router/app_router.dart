@@ -9,7 +9,7 @@ import '../../features/auth/view/login_page.dart';
 import '../../features/home/view/home_page.dart';
 // import '../../features/jadwal_distribusi/view/jadwal_page.dart';
 import '../../features/konsultasi/view/konsultasi_page.dart';
-import '../../features/konsultasi/view/chat_page.dart';
+// import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
 // import '../../features/riwayat/view/riwayat_page.dart';
 // import '../../features/chatbot/view/chatbot_page.dart';
@@ -48,14 +48,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'konsultasi',
         builder: (context, state) => const KonsultasiPage(),
       ),
-      GoRoute(
-        path: '/chat/:id',
-        name: 'chat',
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return ChatPage(chatId: id);
-        },
-      ),
+      // GoRoute(
+      //   path: '/chat/:id',
+      //   name: 'chat',
+      //   builder: (context, state) {
+      //     final id = state.pathParameters['id']!;
+      //     return ChatPage(chatId: id);
+      //   },
+      // ),
       GoRoute(
         path: '/komunitas',
         name: 'komunitas',
