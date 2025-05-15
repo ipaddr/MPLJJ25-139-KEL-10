@@ -25,7 +25,9 @@ class _KomunitasPageState extends State<KomunitasPage>
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundImage: AssetImage('assets/images/profile.jpg'), // Ganti sesuai asset
+            backgroundImage: AssetImage(
+              'assets/images/profile.jpg',
+            ), // Ganti sesuai asset
           ),
         ),
         title: const Text('GiziKu Komunitas'),
@@ -74,7 +76,10 @@ class _KomunitasPageState extends State<KomunitasPage>
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.health_and_safety), label: ''),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.health_and_safety),
+            label: '',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: ''),
@@ -126,20 +131,20 @@ class _KomunitasPageState extends State<KomunitasPage>
             ),
             title: Row(
               children: [
-                Text(post["name"]!),
+                Text(post["name"].toString()),
                 if (post["verified"] == true)
                   const Padding(
                     padding: EdgeInsets.only(left: 4),
                     child: Icon(Icons.verified, color: Colors.blue, size: 16),
-                  )
+                  ),
               ],
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(post["time"]!),
+                Text(post["name"].toString()),
                 const SizedBox(height: 4),
-                Text(post["text"]!),
+                Text(post["text"].toString()),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -153,7 +158,7 @@ class _KomunitasPageState extends State<KomunitasPage>
                     const Spacer(),
                     Icon(Icons.share_outlined, size: 16),
                   ],
-                )
+                ),
               ],
             ),
             isThreeLine: true,
