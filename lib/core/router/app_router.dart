@@ -16,7 +16,7 @@ import '../../features/home/view/home_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/landing',
+    initialLocation: '/home',
     routes: [
       GoRoute(
         path: '/landing',
@@ -34,7 +34,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
-        path: '/',
+        path: '/home',
         name: 'home',
         builder: (context, state) => const HomePage(),
       ),
