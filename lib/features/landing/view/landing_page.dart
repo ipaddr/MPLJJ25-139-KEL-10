@@ -17,7 +17,7 @@ class LandingPage extends StatelessWidget {
             Column(
               children: [
                 Image.asset(
-                  'assets/images/logo_giziku.png', // Pastikan file ini ada di pubspec.yaml
+                  'assets/images/logo_giziku_white.png', // Pastikan file ini ada di pubspec.yaml
                   width: 160,
                   height: 160,
                 ),

@@ -22,7 +22,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
             children: [
               const SizedBox(height: 20),
               // Logo
-              Image.asset('assets/images/logo_giziku.png', width: 140),
+              Image.asset('assets/images/logo_giziku_blue.png', width: 140),
               const SizedBox(height: 12),
               const Text(
                 'GiziKu',
