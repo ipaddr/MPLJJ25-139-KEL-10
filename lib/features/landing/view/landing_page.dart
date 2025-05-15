@@ -44,7 +44,7 @@ class LandingPage extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Gunakan GoRouter untuk navigasi
-                    context.go('/select-role');
+                    context.push('/select-role');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7AC6F5),
