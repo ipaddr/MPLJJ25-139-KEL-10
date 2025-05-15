@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -16,7 +17,7 @@ class LandingPage extends StatelessWidget {
             Column(
               children: [
                 Image.asset(
-                  'assets/images/logo_giziku.png', // Pastikan file ini ada
+                  'assets/images/logo_giziku.png', // Pastikan file ini ada di pubspec.yaml
                   width: 160,
                   height: 160,
                 ),
@@ -42,10 +43,8 @@ class LandingPage extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/select-role',
-                    ); // ganti rute jika perlu
+                    // Gunakan GoRouter untuk navigasi
+                    context.go('/select-role');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7AC6F5),

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 // Import halaman
 import '../../features/landing/view/landing_page.dart';
 import '../../features/auth/view/role_selection_page.dart';
-// import '../../features/auth/view/login_page.dart';
+import '../../features/auth/view/login_page.dart';
 import '../../features/home/view/home_page.dart';
 // import '../../features/jadwal_distribusi/view/jadwal_page.dart';
 // import '../../features/konsultasi/view/konsultasi_page.dart';
@@ -28,11 +28,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'select-role',
         builder: (context, state) => const RoleSelectionPage(),
       ),
-      // GoRoute(
-      //   path: '/login',
-      //   name: 'login',
-      //   builder: (context, state) => const LoginPage(),
-      // ),
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginPage(),
+      ),
       GoRoute(
         path: '/',
         name: 'home',
