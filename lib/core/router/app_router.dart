@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,7 +52,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   path: '/chat/:id',
       //   name: 'chat',
       //   builder: (context, state) {
-      //     final id = state.pathParameters['id']!;
+      //     final id = state.params['id']!;
       //     return ChatPage(chatId: id);
       //   },
       // ),

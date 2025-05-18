@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -106,7 +107,7 @@ class HomePage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: ''),
         ],
         onTap: (index) {
-          // Arahkan ke halaman sesuai index jika diinginkan
+          // Bisa ditambahkan logika navigasi bottom nav jika diperlukan
         },
       ),
     );
@@ -130,13 +131,16 @@ class _MenuCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.route,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap:
-          route.isNotEmpty ? () => Navigator.pushNamed(context, route) : null,
+          route.isNotEmpty
+              ? () => context.push(route) // ✅ gunakan GoRouter
+              : null,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2196F3),
