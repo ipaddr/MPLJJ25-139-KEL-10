@@ -1,3 +1,169 @@
+// import 'package:flutter/material.dart';
+// import 'package:go_router/go_router.dart';
+
+// class HomePage extends StatelessWidget {
+//   const HomePage({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final menuItems = [
+//       _MenuItem('Jadwal Distribusi', Icons.calendar_today, '/jadwal'),
+//       _MenuItem('Konsultasi Gizi', Icons.chat, '/konsultasi'),
+//       _MenuItem('Komunitas & Edukasi', Icons.people, '/komunitas'),
+//       _MenuItem(
+//         'Riwayat Bantuan Terdistribusi',
+//         Icons.receipt_long,
+//         '/riwayat',
+//       ),
+//       _MenuItem('GiziSmart', Icons.smart_toy, '/chatbot'),
+//       _MenuItem('Coming Soon…', Icons.hourglass_empty, ''),
+//     ];
+
+//     return Scaffold(
+//       backgroundColor: const Color(0xFFEAF6FD),
+//       appBar: AppBar(
+//         backgroundColor: const Color(0xFFEAF6FD),
+//         elevation: 0,
+//         toolbarHeight: 80,
+//         automaticallyImplyLeading: false,
+//         title: Column(
+//           crossAxisAlignment: CrossAxisAlignment.end,
+//           children: [
+//             const Text(
+//               'Halo, Selamat Sore',
+//               style: TextStyle(fontSize: 14, color: Colors.black),
+//             ),
+//             const SizedBox(height: 4),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.end,
+//               children: [
+//                 const Text(
+//                   'Wahyu Isnan',
+//                   style: TextStyle(
+//                     fontWeight: FontWeight.bold,
+//                     color: Colors.black,
+//                   ),
+//                 ),
+//                 const SizedBox(width: 8),
+//                 const CircleAvatar(
+//                   radius: 14,
+//                   backgroundImage: AssetImage('assets/images/profile.png'),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+//         actions: [
+//           IconButton(
+//             icon: const Icon(Icons.notifications_none),
+//             onPressed: () {},
+//           ),
+//           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+//         ],
+//       ),
+//       body: Padding(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             const Text(
+//               'Menu',
+//               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+//             ),
+//             const SizedBox(height: 16),
+//             Expanded(
+//               child: GridView.count(
+//                 crossAxisCount: 2,
+//                 crossAxisSpacing: 16,
+//                 mainAxisSpacing: 16,
+//                 children:
+//                     menuItems
+//                         .map(
+//                           (item) => _MenuCard(
+//                             label: item.label,
+//                             icon: item.icon,
+//                             route: item.route,
+//                           ),
+//                         )
+//                         .toList(),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//       bottomNavigationBar: BottomNavigationBar(
+//         backgroundColor: const Color(0xFFEAF6FD),
+//         selectedItemColor: Colors.blue,
+//         unselectedItemColor: Colors.black45,
+//         currentIndex: 2,
+//         items: const [
+//           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
+//           BottomNavigationBarItem(
+//             icon: Icon(Icons.chat_bubble_outline),
+//             label: '',
+//           ),
+//           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+//           BottomNavigationBarItem(icon: Icon(Icons.people), label: ''),
+//           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: ''),
+//         ],
+//         onTap: (index) {
+//           // Bisa ditambahkan logika navigasi bottom nav jika diperlukan
+//         },
+//       ),
+//     );
+//   }
+// }
+
+// class _MenuItem {
+//   final String label;
+//   final IconData icon;
+//   final String route;
+
+//   _MenuItem(this.label, this.icon, this.route);
+// }
+
+// class _MenuCard extends StatelessWidget {
+//   final String label;
+//   final IconData icon;
+//   final String route;
+
+//   const _MenuCard({
+//     required this.label,
+//     required this.icon,
+//     required this.route,
+//     super.key,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap:
+//           route.isNotEmpty
+//               ? () => context.push(route) // ✅ gunakan GoRouter
+//               : null,
+//       child: Container(
+//         decoration: BoxDecoration(
+//           color: const Color(0xFF2196F3),
+//           borderRadius: BorderRadius.circular(20),
+//         ),
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Icon(icon, color: Colors.white, size: 40),
+//             const SizedBox(height: 16),
+//             Text(
+//               label,
+//               textAlign: TextAlign.center,
+//               style: const TextStyle(color: Colors.white, fontSize: 14),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,23 +192,47 @@ class HomePage extends StatelessWidget {
         elevation: 0,
         toolbarHeight: 80,
         automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        titleSpacing: 16,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Halo, Selamat Sore',
-              style: TextStyle(fontSize: 14, color: Colors.black),
+            // Tombol Logout
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.black),
+              onPressed: () {
+                _showLogoutDialog(context);
+              },
             ),
-            const SizedBox(height: 4),
+            // Aksi ikon lainnya
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text(
-                  'Wahyu Isnan',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                IconButton(
+                  icon: const Icon(
+                    Icons.notifications_none,
                     color: Colors.black,
                   ),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search, color: Colors.black),
+                  onPressed: () {},
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Halo, Selamat Sore',
+                      style: TextStyle(fontSize: 12, color: Colors.black),
+                    ),
+                    const Text(
+                      'Wahyu Isnan',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(width: 8),
                 const CircleAvatar(
@@ -53,13 +243,6 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
-          ),
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -107,9 +290,36 @@ class HomePage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: ''),
         ],
         onTap: (index) {
-          // Bisa ditambahkan logika navigasi bottom nav jika diperlukan
+          // Navigasi bottom nav opsional
         },
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text(
+              'Apakah Anda yakin ingin keluar dari akun ini?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // tutup dialog
+                  context.go('/select-role'); // kembali ke pemilihan role
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Keluar'),
+              ),
+            ],
+          ),
     );
   }
 }
@@ -137,10 +347,7 @@ class _MenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap:
-          route.isNotEmpty
-              ? () => context.push(route) // ✅ gunakan GoRouter
-              : null,
+      onTap: route.isNotEmpty ? () => context.push(route) : null,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2196F3),
