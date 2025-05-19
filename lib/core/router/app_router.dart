@@ -7,6 +7,7 @@ import '../../features/landing/view/landing_page.dart';
 import '../../features/auth/view/role_selection_page.dart';
 import '../../features/auth/view/login_page.dart';
 import '../../features/home/view/home_page.dart';
+import '../../features/home/view/home_petugas.dart';
 import '../../features/jadwal_distribusi/view/jadwal_page.dart';
 import '../../features/konsultasi/view/konsultasi_page.dart';
 // import '../../features/konsultasi/view/chat_page.dart';
@@ -31,12 +32,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) {
+          final role = state.extra as String?;
+          return LoginPage(role: role);
+        },
       ),
       GoRoute(
-        path: '/home',
+        path: '/',
         name: 'home',
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: '/petugas',
+        name: 'petugas-home',
+        builder:
+            (context, state) => const HomeAdminPage(), // Buat halaman ini nanti
       ),
       GoRoute(
         path: '/jadwal',
