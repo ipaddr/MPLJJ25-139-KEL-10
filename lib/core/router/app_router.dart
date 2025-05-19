@@ -1,4 +1,4 @@
-// import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,7 +11,7 @@ import '../../features/home/view/home_page.dart';
 import '../../features/konsultasi/view/konsultasi_page.dart';
 // import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
-// import '../../features/riwayat/view/riwayat_page.dart';
+import '../../features/riwayat/view/riwayat_page.dart';
 // import '../../features/chatbot/view/chatbot_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -61,22 +61,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'komunitas',
         builder: (context, state) => const KomunitasPage(),
       ),
-      // GoRoute(
-      //   path: '/riwayat',
-      //   name: 'riwayat',
-      //   builder: (context, state) => const RiwayatPage(),
-      // ),
+      GoRoute(
+        path: '/riwayat',
+        name: 'riwayat',
+        builder: (context, state) => const RiwayatPage(),
+      ),
       // GoRoute(
       //   path: '/chatbot',
       //   name: 'chatbot',
       //   builder: (context, state) => const ChatbotPage(),
       // ),
     ],
-    // errorBuilder:
-    //     (context, state) => Scaffold(
-    //       body: Center(
-    //         child: Text('Halaman tidak ditemukan: ${state.location}'),
-    //       ),
-    //     ),
+    errorBuilder:
+        (context, state) => Scaffold(
+          body: Center(child: Text('Halaman tidak ditemukan: ${state.uri}')),
+        ),
   );
 });

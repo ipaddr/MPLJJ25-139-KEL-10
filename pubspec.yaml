@@ -74,8 +74,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-  - assets/images/logo_giziku_white.png
-  - assets/images/logo_giziku_blue.png
+  - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
