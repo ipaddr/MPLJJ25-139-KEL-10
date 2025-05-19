@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+// Dummy akun
+const akunPengguna = {'email': 'pengguna@example.com', 'password': '123456'};
+
+const akunPetugas = {'email': 'petugas@example.com', 'password': '654321'};
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? role;
+  const LoginPage({super.key, this.role});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -10,186 +17,66 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  String _role = 'pengguna'; // default
+  String? _error;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String) {
-      setState(() {
-        _role = args;
-      });
+  void _login() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (widget.role == 'pengguna') {
+      if (email == akunPengguna['email'] &&
+          password == akunPengguna['password']) {
+        context.go('/'); // Halaman home pengguna
+      } else {
+        setState(() => _error = 'Email atau password salah');
+      }
+    } else if (widget.role == 'petugas') {
+      if (email == akunPetugas['email'] &&
+          password == akunPetugas['password']) {
+        context.go('/petugas'); // Ganti dengan halaman utama petugas
+      } else {
+        setState(() => _error = 'Email atau password salah');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Halo!',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF218BCF),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Selamat Datang',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF218BCF),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                'Email',
-                style: TextStyle(
-                  color: Colors.brown,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              _buildTextField(_emailController, 'example@example.com', false),
-
-              const SizedBox(height: 16),
-              const Text(
-                'Kata Sandi',
-                style: TextStyle(
-                  color: Colors.brown,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              _buildTextField(_passwordController, '********', true),
-
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text(
-                    'Lupa Kata Sandi',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF218BCF)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              _buildMainButton('Masuk', () {
-                // TODO: Autentikasi berdasarkan _role dan Firebase Auth
-              }),
-
-              const SizedBox(height: 20),
-              const Center(child: Text('or')),
-              const SizedBox(height: 12),
-              const Center(
-                child: CircleAvatar(
-                  radius: 24,
-                  backgroundImage: AssetImage(
-                    'assets/images/google_placeholder.png',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/register', arguments: _role);
-                  },
-                  child: const Text.rich(
-                    TextSpan(
-                      text: 'Belum Punya Akun? ',
-                      style: TextStyle(color: Colors.black87),
-                      children: [
-                        TextSpan(
-                          text: 'Daftar',
-                          style: TextStyle(
-                            color: Color(0xFF218BCF),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        title: const Text('Masuk'),
+        backgroundColor: const Color(0xFF218BCF),
       ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    bool isPassword,
-  ) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword && _obscurePassword,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: const Color(0xFFE0F1FB),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        suffixIcon:
-            isPassword
-                ? IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                )
-                : null,
-      ),
-    );
-  }
-
-  Widget _buildMainButton(String text, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF218BCF),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 16, color: Colors.white),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'contoh@example.com',
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+            const SizedBox(height: 24),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _login,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF218BCF),
+              ),
+              child: const Text('Masuk'),
+            ),
+          ],
         ),
       ),
     );

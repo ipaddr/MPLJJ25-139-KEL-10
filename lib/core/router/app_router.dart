@@ -7,7 +7,7 @@ import '../../features/landing/view/landing_page.dart';
 import '../../features/auth/view/role_selection_page.dart';
 import '../../features/auth/view/login_page.dart';
 import '../../features/home/view/home_page.dart';
-// import '../../features/jadwal_distribusi/view/jadwal_page.dart';
+import '../../features/jadwal_distribusi/view/jadwal_page.dart';
 import '../../features/konsultasi/view/konsultasi_page.dart';
 // import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
@@ -38,11 +38,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'home',
         builder: (context, state) => const HomePage(),
       ),
-      // GoRoute(
-      //   path: '/jadwal',
-      //   name: 'jadwal',
-      //   builder: (context, state) => const JadwalPage(),
-      // ),
+      GoRoute(
+        path: '/jadwal',
+        name: 'jadwal',
+        builder: (context, state) => const JadwalPage(),
+      ),
       GoRoute(
         path: '/konsultasi',
         name: 'konsultasi',
