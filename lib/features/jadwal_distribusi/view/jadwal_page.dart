@@ -9,7 +9,7 @@ class JadwalPage extends StatefulWidget {
 }
 
 class _JadwalPageState extends State<JadwalPage> {
-  DateTime _selectedDate = DateTime.now();
+  final DateTime _selectedDate = DateTime.now();
   final List<String> _bulan = [
     'Jan',
     'Feb',

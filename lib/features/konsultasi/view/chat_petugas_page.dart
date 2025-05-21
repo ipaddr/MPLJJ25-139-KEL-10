@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class ChatAdminPage extends StatelessWidget {
+class ChatPetugasPage extends StatelessWidget {
   final String userName;
 
-  const ChatAdminPage({super.key, required this.userName});
+  const ChatPetugasPage({super.key, required this.userName});
 
   @override
   Widget build(BuildContext context) {
