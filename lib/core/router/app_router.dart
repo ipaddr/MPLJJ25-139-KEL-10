@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'initial_route_provider.dart';
 
 // Import halaman
 import '../../features/landing/view/landing_page.dart';
@@ -16,6 +17,7 @@ import '../../features/riwayat/view/riwayat_page.dart';
 // import '../../features/chatbot/view/chatbot_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final initialRoute = ref.watch(initialRouteProvider); // ambil dari provider
   return GoRouter(
     initialLocation: '/landing',
     routes: [
@@ -38,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/',
+        path: '/home',
         name: 'home',
         builder: (context, state) => const HomePage(),
       ),

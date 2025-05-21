@@ -166,6 +166,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -311,10 +312,17 @@ class HomePage extends StatelessWidget {
                 child: const Text('Batal'),
               ),
               ElevatedButton(
-                onPressed: () {
+                // onPressed: () {
+                //   Navigator.pop(ctx); // tutup dialog
+                //   context.go('/select-role'); // kembali ke pemilihan role
+                // },
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('user_role'); // hapus sesi
                   Navigator.pop(ctx); // tutup dialog
-                  context.go('/select-role'); // kembali ke pemilihan role
+                  context.go('/select-role'); // kembali ke awal
                 },
+
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Keluar'),
               ),

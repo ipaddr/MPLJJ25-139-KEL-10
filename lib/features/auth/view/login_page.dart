@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Dummy akun
 const akunPengguna = {'email': 'pengguna@example.com', 'password': '123456'};
@@ -19,21 +20,46 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   String? _error;
 
-  void _login() {
+  // void _login() {
+  //   final email = _emailController.text.trim();
+  //   final password = _passwordController.text;
+
+  //   if (widget.role == 'pengguna') {
+  //     if (email == akunPengguna['email'] &&
+  //         password == akunPengguna['password']) {
+  //       context.go('/'); // Halaman home pengguna
+  //     } else {
+  //       setState(() => _error = 'Email atau password salah');
+  //     }
+  //   } else if (widget.role == 'petugas') {
+  //     if (email == akunPetugas['email'] &&
+  //         password == akunPetugas['password']) {
+  //       context.go('/petugas'); // Ganti dengan halaman utama petugas
+  //     } else {
+  //       setState(() => _error = 'Email atau password salah');
+  //     }
+  //   }
+  // }
+
+  void _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     if (widget.role == 'pengguna') {
       if (email == akunPengguna['email'] &&
           password == akunPengguna['password']) {
-        context.go('/'); // Halaman home pengguna
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_role', 'pengguna'); // ✅ Simpan sesi
+        context.go('/home'); // ➜ ke menu pengguna
       } else {
         setState(() => _error = 'Email atau password salah');
       }
     } else if (widget.role == 'petugas') {
       if (email == akunPetugas['email'] &&
           password == akunPetugas['password']) {
-        context.go('/petugas'); // Ganti dengan halaman utama petugas
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_role', 'petugas'); // ✅ Simpan sesi
+        context.go('/petugas'); // ➜ ke menu petugas
       } else {
         setState(() => _error = 'Email atau password salah');
       }
