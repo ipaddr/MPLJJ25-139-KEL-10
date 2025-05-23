@@ -1,170 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../models/postingan.dart';
 
-class KomunitasPage extends StatefulWidget {
+class KomunitasPage extends StatelessWidget {
   const KomunitasPage({super.key});
 
   @override
-  State<KomunitasPage> createState() => _KomunitasPageState();
-}
-
-class _KomunitasPageState extends State<KomunitasPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    _tabController = TabController(length: 3, vsync: this);
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leadingWidth: 60,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundImage: AssetImage(
-              'assets/images/profile.jpg',
-            ), // Ganti sesuai asset
-          ),
-        ),
-        title: const Text('GiziKu Komunitas'),
-        actions: [
-          Stack(
-            alignment: Alignment.topRight,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none),
-                onPressed: () {},
-              ),
-              const CircleAvatar(
-                radius: 8,
-                backgroundColor: Colors.red,
-                child: Text(
-                  '3',
-                  style: TextStyle(fontSize: 10, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Terbaru'),
-            Tab(text: 'Keseharian'),
-            Tab(text: 'Diri Sendiri'),
-          ],
-        ),
+    // Dummy data
+    final List<Postingan> postinganList = [
+      Postingan(
+        id: '1',
+        nama: 'Dr. Annisa Irena, Sp.GK.',
+        konten: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        waktu: DateTime.now().subtract(const Duration(minutes: 2)),
+        terverifikasi: true,
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          buildPostList(), // Buat function ini di bawah
-          buildPostList(),
-          buildPostList(),
-        ],
+      Postingan(
+        id: '2',
+        nama: 'Wahyu Isnan',
+        konten: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        waktu: DateTime.now(),
+        terverifikasi: false,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Aksi ketika menulis postingan baru
-        },
-        child: const Icon(Icons.edit),
+      Postingan(
+        id: '3',
+        nama: 'Fahrezy D.',
+        konten: 'Lorem ipsum dolor sit amet, sed do eiusmod tempor.',
+        waktu: DateTime.now().subtract(const Duration(hours: 3)),
+        terverifikasi: false,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.health_and_safety),
-            label: '',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.menu), label: ''),
-        ],
-      ),
-    );
-  }
-
-  Widget buildPostList() {
-    final posts = [
-      {
-        "name": "Wahyu Isnan",
-        "time": "Sekarang",
-        "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        "likes": 2,
-        "comments": 0,
-        "verified": false,
-      },
-      {
-        "name": "Fahrezy D.",
-        "time": "3 jam lalu",
-        "text": "Lorem ipsum dolor sit amet, sed do eiusmod tempor.",
-        "likes": 12,
-        "comments": 2,
-        "verified": false,
-      },
-      {
-        "name": "Dr. Annisa Irena, Sp.GK.",
-        "time": "2 menit lalu",
-        "text": "Lorem ipsum dolor sit amet, sed do eiusmod tempor incididunt.",
-        "likes": 12,
-        "comments": 2,
-        "verified": true,
-      },
     ];
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: posts.length,
-      itemBuilder: (context, index) {
-        final post = posts[index];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/profile.jpg'),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF218BCF),
+        title: const Text('GiziKu Komunitas'),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Icon(Icons.notifications),
+          ),
+        ],
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: postinganList.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final post = postinganList[index];
+          return ListTile(
+            onTap: () => context.push('/detail-postingan', extra: post),
+            leading: const CircleAvatar(
+              backgroundImage: AssetImage('assets/images/default_profile.png'),
             ),
             title: Row(
               children: [
-                Text(post["name"].toString()),
-                if (post["verified"] == true)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4),
-                    child: Icon(Icons.verified, color: Colors.blue, size: 16),
-                  ),
+                Text(
+                  post.nama,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                if (post.terverifikasi) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.verified, size: 16, color: Colors.blue),
+                ],
               ],
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(post["name"].toString()),
                 const SizedBox(height: 4),
-                Text(post["text"].toString()),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.thumb_up_alt_outlined, size: 16),
-                    const SizedBox(width: 4),
-                    Text(post["likes"].toString()),
-                    const SizedBox(width: 16),
-                    Icon(Icons.comment_outlined, size: 16),
-                    const SizedBox(width: 4),
-                    Text(post["comments"].toString()),
-                    const Spacer(),
-                    Icon(Icons.share_outlined, size: 16),
-                  ],
-                ),
+                Text(post.konten, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
             ),
-            isThreeLine: true,
-          ),
-        );
-      },
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/buat-postingan'),
+        backgroundColor: const Color(0xFF218BCF),
+        child: const Icon(Icons.edit),
+      ),
     );
   }
 }

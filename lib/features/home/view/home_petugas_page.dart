@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePetugasPage extends StatelessWidget {
   const HomePetugasPage({super.key});
 
-  void _handleLogout(BuildContext context) {
-    // Logika logout, misal hapus token, navigasi ke login, dsb
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  Future<void> _handleLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_role');
+    context.go('/select-role');
   }
 
   @override
@@ -17,7 +20,7 @@ class HomePetugasPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.logout, color: Colors.black87),
-          onPressed: () => _handleLogout(context),
+          onPressed: () => _showLogoutDialog(context),
           tooltip: 'Keluar',
         ),
         actions: const [
@@ -39,21 +42,31 @@ class HomePetugasPage extends StatelessWidget {
                   backgroundImage: AssetImage('assets/images/dr_annisa.png'),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Halo, Selamat Sore',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    Text(
-                      'Dr. Annisa',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
+                GestureDetector(
+                  onTap: () => context.push('/profile'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Halo, Selamat Sore',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
-                    ),
-                  ],
+                      Row(
+                        children: const [
+                          Text(
+                            'Dr. Annisa',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.verified, color: Colors.blue, size: 16),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -76,14 +89,12 @@ class HomePetugasPage extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.group_outlined,
                     label: 'Postingan Edukatif',
-                    onTap:
-                        () => Navigator.pushNamed(context, '/komunitas-admin'),
+                    onTap: () => context.push('/komunitas-petugas'),
                   ),
                   _buildMenuItem(
                     icon: Icons.chat_outlined,
                     label: 'Konsultasi Gizi',
-                    onTap:
-                        () => Navigator.pushNamed(context, '/konsultasi-admin'),
+                    onTap: () => context.push('/konsultasi-petugas'),
                   ),
                   _buildMenuItem(label: 'Coming Soon...'),
                   _buildMenuItem(label: 'Coming Soon...'),
@@ -103,7 +114,9 @@ class HomePetugasPage extends StatelessWidget {
             color: Color(0xFFEAF7FF),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Center(child: Icon(Icons.home, color: Colors.blue, size: 32)),
+          child: const Center(
+            child: Icon(Icons.home, color: Colors.blue, size: 32),
+          ),
         ),
       ),
     );
@@ -136,6 +149,35 @@ class HomePetugasPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text(
+              'Apakah Anda yakin ingin keluar dari akun ini?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('user_role');
+                  Navigator.pop(ctx);
+                  context.go('/select-role');
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Keluar'),
+              ),
+            ],
+          ),
     );
   }
 }
