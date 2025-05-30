@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// Dummy akun
-const akunPengguna = {'email': 'pengguna@example.com', 'password': '123456'};
-
-const akunPetugas = {'email': 'petugas@example.com', 'password': '654321'};
+import 'package:giziku/features/auth/services/auth_service.dart';
+import 'package:giziku/features/home/view/home_page.dart';
+import 'package:giziku/features/home/view/home_petugas_page.dart';
 
 class LoginPage extends StatefulWidget {
   final String? role;
@@ -16,92 +13,54 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  String? _error;
+  final emailCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
+  String? error;
 
-  // void _login() {
-  //   final email = _emailController.text.trim();
-  //   final password = _passwordController.text;
-
-  //   if (widget.role == 'pengguna') {
-  //     if (email == akunPengguna['email'] &&
-  //         password == akunPengguna['password']) {
-  //       context.go('/'); // Halaman home pengguna
-  //     } else {
-  //       setState(() => _error = 'Email atau password salah');
-  //     }
-  //   } else if (widget.role == 'petugas') {
-  //     if (email == akunPetugas['email'] &&
-  //         password == akunPetugas['password']) {
-  //       context.go('/petugas'); // Ganti dengan halaman utama petugas
-  //     } else {
-  //       setState(() => _error = 'Email atau password salah');
-  //     }
-  //   }
-  // }
+  final authService = AuthService();
 
   void _login() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    try {
+      final data = await authService.login(emailCtrl.text, passwordCtrl.text);
+      final role = data['role'];
 
-    if (widget.role == 'pengguna') {
-      if (email == akunPengguna['email'] &&
-          password == akunPengguna['password']) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_role', 'pengguna'); // ✅ Simpan sesi
-        context.go('/home'); // ➜ ke menu pengguna
+      if (role == 'pengguna') {
+        context.go('/home');
+      } else if (role == 'petugas') {
+        context.go('/home-petugas');
       } else {
-        setState(() => _error = 'Email atau password salah');
+        setState(() {
+          error = 'Role tidak valid';
+        });
       }
-    } else if (widget.role == 'petugas') {
-      if (email == akunPetugas['email'] &&
-          password == akunPetugas['password']) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_role', 'petugas'); // ✅ Simpan sesi
-        context.go('/petugas'); // ➜ ke menu petugas
-      } else {
-        setState(() => _error = 'Email atau password salah');
-      }
+    } catch (e) {
+      setState(() {
+        error = 'Email atau password salah';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Masuk'),
-        backgroundColor: const Color(0xFF218BCF),
-      ),
+      appBar: AppBar(title: const Text('Masuk')),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const SizedBox(height: 20),
             TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'contoh@example.com',
-              ),
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
-            const SizedBox(height: 16),
             TextField(
-              controller: _passwordController,
+              controller: passwordCtrl,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
             ),
-            const SizedBox(height: 24),
-            if (_error != null)
-              Text(_error!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF218BCF),
-              ),
-              child: const Text('Masuk'),
-            ),
+            ElevatedButton(onPressed: _login, child: const Text('Login')),
+            if (error != null)
+              Text(error!, style: const TextStyle(color: Colors.red)),
           ],
         ),
       ),

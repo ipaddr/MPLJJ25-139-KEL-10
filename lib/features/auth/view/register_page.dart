@@ -1,132 +1,113 @@
 import 'package:flutter/material.dart';
+import 'package:giziku/features/auth/services/auth_service.dart';
 import 'package:go_router/go_router.dart';
 
 class RegisterPage extends StatefulWidget {
-  final String? role;
-  const RegisterPage({super.key, this.role});
+  final String role;
+  const RegisterPage({super.key, required this.role});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final namaCtrl = TextEditingController();
+  final emailCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
+
+  // Tambahan untuk petugas
+  final specializationCtrl = TextEditingController();
+  final certificationCtrl = TextEditingController();
+  final availableHoursCtrl = TextEditingController();
+
+  String? error;
+  final authService = AuthService();
+
+  void _register() async {
+    try {
+      final role = widget.role == 'petugas' ? 'Petugas' : 'Pengguna Umum';
+      final availableList =
+          availableHoursCtrl.text
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+
+      await authService.register(
+        name: namaCtrl.text,
+        email: emailCtrl.text,
+        password: passwordCtrl.text,
+        role: role,
+        specialization: role == 'Petugas' ? specializationCtrl.text : null,
+        certification: role == 'Petugas' ? certificationCtrl.text : null,
+        availableHours: role == 'Petugas' ? availableList : null,
+      );
+
+      context.go('/login');
+    } catch (e) {
+      setState(() => error = 'Gagal mendaftar: ${e.toString()}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isPengguna = widget.role == 'pengguna';
-    final roleText = isPengguna ? 'Pengguna' : 'Petugas';
+    final isPetugas = widget.role == 'petugas';
+    final roleText = isPetugas ? 'Petugas' : 'Pengguna Umum';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Halo!'),
-        backgroundColor: const Color(0xFF218BCF),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Daftar')),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Selamat Datang',
-                style: TextStyle(
-                  color: Colors.blue.shade800,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+        padding: const EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            Text(
+              'Daftar Sebagai $roleText',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: namaCtrl,
+              decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+            ),
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: passwordCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Kata Sandi'),
+            ),
+            const SizedBox(height: 12),
+
+            if (isPetugas) ...[
+              TextField(
+                controller: specializationCtrl,
+                decoration: const InputDecoration(labelText: 'Spesialisasi'),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Daftar sebagai $roleText.',
-                style: const TextStyle(fontSize: 14, color: Colors.green),
+              TextField(
+                controller: certificationCtrl,
+                decoration: const InputDecoration(labelText: 'No. Sertifikasi'),
               ),
-              const SizedBox(height: 20),
-              _buildField('Nama Lengkap', _nameController, hint: 'nama anda'),
-              const SizedBox(height: 12),
-              _buildField(
-                'Email',
-                _emailController,
-                hint: 'example@example.com',
-              ),
-              const SizedBox(height: 12),
-              _buildField('Telepon', _phoneController, hint: '08xxxxxxxxxx'),
-              const SizedBox(height: 12),
-              _buildField('Kata Sandi', _passwordController, obscureText: true),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF218BCF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: () {
-                    // TODO: Tambahkan validasi & simpan ke database kalau pakai backend
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Pendaftaran berhasil!')),
-                    );
-                    context.go('/select-role');
-                  },
-                  child: const Text('Daftar'),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    context.go('/login', extra: widget.role);
-                  },
-                  child: const Text(
-                    'Belum Punya Akun? Daftar',
-                    style: TextStyle(
-                      color: Color(0xFF218BCF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              TextField(
+                controller: availableHoursCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Jam Tersedia (pisahkan dengan koma)',
+                  hintText: 'contoh: Senin 09:00-17:00, Rabu 10:00-16:00',
                 ),
               ),
             ],
-          ),
+
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _register, child: const Text('Daftar')),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(error!, style: const TextStyle(color: Colors.red)),
+              ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildField(
-    String label,
-    TextEditingController controller, {
-    String? hint,
-    bool obscureText = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: const Color(0xFFEAF6FD),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -26,10 +26,10 @@ import '../../features/profile/view/profile_page.dart';
 import '../../features/profile/view/verifikasi_petugas_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final initialRoute = ref.watch(initialRouteProvider);
-  // ambil dari provider
+  final initial = ref.watch(initialRouteProvider); // 👈 ambil dari provider
   return GoRouter(
-    initialLocation: '/profile',
+    initialLocation: initial,
+
     routes: [
       GoRoute(
         path: '/landing',
@@ -45,8 +45,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         name: 'register',
         builder: (context, state) {
-          final role = state.extra as String?;
-          return RegisterPage(role: role);
+          final roleKey = state.extra as String? ?? 'pengguna';
+          return RegisterPage(
+            role: roleKey,
+          ); // role = 'pengguna' atau 'petugas'
         },
       ),
       GoRoute(
