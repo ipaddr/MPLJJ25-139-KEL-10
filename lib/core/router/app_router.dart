@@ -16,7 +16,7 @@ import '../../features/konsultasi/view/konsultasi_page.dart';
 import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
 import '../../features/riwayat/view/riwayat_page.dart';
-// import '../../features/chatbot/view/chatbot_page.dart';
+import '../../features/chatbot/view/chatbot_page.dart'; // ✅ Import ChatbotPage
 import '../../features/home/view/home_petugas_page.dart';
 import '../../features/konsultasi/view/konsultasi_petugas_page.dart';
 import '../../features/profile/view/profile_page.dart';
@@ -45,17 +45,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'register',
         builder: (context, state) {
           final roleKey = state.extra as String? ?? 'pengguna';
-          return RegisterPage(
-            role: roleKey,
-          ); // role = 'pengguna' atau 'petugas'
+          return RegisterPage(role: roleKey);
         },
       ),
       GoRoute(
         path: '/login',
         name: 'login',
         builder: (context, state) {
-          final role = state.extra as String?; // ⬅ Ambil dari RoleSelectionPage
-          return LoginPage(role: role); // ⬅ Kirim ke LoginPage
+          final role = state.extra as String?;
+          return LoginPage(role: role);
         },
       ),
       GoRoute(
@@ -91,11 +89,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'riwayat',
         builder: (context, state) => const RiwayatPage(),
       ),
-      // GoRoute(
-      //   path: '/chatbot',
-      //   name: 'chatbot',
-      //   builder: (context, state) => const ChatbotPage(),
-      // ),
+      GoRoute(
+        path: '/chatbot', // ✅ Rute baru untuk chatbot
+        name: 'chatbot',
+        builder: (context, state) => const ChatbotPage(),
+      ),
       GoRoute(
         path: '/home-petugas',
         name: 'home-petugas',
@@ -127,9 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verifikasi-petugas',
         name: 'verifikasi-petugas',
-        builder:
-            (context, state) =>
-                VerifikasiPetugasPage(), // ✅ Hapus 'const' di sini
+        builder: (context, state) => VerifikasiPetugasPage(),
       ),
     ],
     errorBuilder:

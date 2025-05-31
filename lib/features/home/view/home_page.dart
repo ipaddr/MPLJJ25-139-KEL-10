@@ -101,7 +101,11 @@ class _HomePageState extends State<HomePage> {
         Icons.receipt_long,
         '/riwayat',
       ),
-      _MenuItem('GiziSmart', Icons.smart_toy, '/chatbot'),
+      _MenuItem(
+        'GiziSmart',
+        Icons.smart_toy,
+        '/chatbot',
+      ), // ✅ Navigasi ke chatbot
       _MenuItem('Coming Soon…', Icons.hourglass_empty, ''),
     ];
 
@@ -210,7 +214,6 @@ class _HomePageState extends State<HomePage> {
                     menuItems
                         .map(
                           (item) => _MenuCard(
-                            // ✅ Tidak ada lagi super.key di sini
                             label: item.label,
                             icon: item.icon,
                             route: item.route,
@@ -290,7 +293,6 @@ class _MenuCard extends StatelessWidget {
   final IconData icon;
   final String route;
 
-  // ✅ Hapus 'super.key' dari konstruktor
   const _MenuCard({
     required this.label,
     required this.icon,
