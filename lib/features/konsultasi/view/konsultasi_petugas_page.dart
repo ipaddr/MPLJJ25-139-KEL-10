@@ -1,17 +1,17 @@
+// lib/features/konsultasi/view/konsultasi_petugas_page.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import 'package:giziku/models/chat_user.dart'; // Import model ChatUser
 
 class KonsultasiPetugasPage extends StatelessWidget {
   const KonsultasiPetugasPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> konsultasiList = [
-      {'name': 'Wahyu Isnan', 'image': 'assets/images/user_wahyu.png'},
-    ];
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE9F6FF),
+        backgroundColor: const Color(0xFFEAF7FF),
         elevation: 0,
         title: const Text(
           'Konsultasi',
@@ -42,61 +42,104 @@ class KonsultasiPetugasPage extends StatelessWidget {
                   backgroundColor: Color(0xFFEAF7FF),
                   labelStyle: TextStyle(color: Color(0xFF218BCF)),
                 ),
+                // Tambahkan filter lain di sini jika diperlukan
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: konsultasiList.length,
-              itemBuilder: (context, index) {
-                final user = konsultasiList[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FB),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundImage: AssetImage(user['image']!),
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .where(
+                        'role',
+                        isEqualTo: 'Pengguna Umum',
+                      ) // Filter hanya Pengguna Umum
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('Tidak ada pengguna umum untuk konsultasi.'),
+                  );
+                }
+
+                final penggunaList =
+                    snapshot.data!.docs.map((doc) {
+                      return ChatUser.fromFirestore(doc);
+                    }).toList();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: penggunaList.length,
+                  itemBuilder: (context, index) {
+                    final user = penggunaList[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F9FB),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user['name']!,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF218BCF),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundImage: NetworkImage(
+                              user.profileImageUrl,
+                            ), // Menggunakan NetworkImage
+                            onBackgroundImageError: (exception, stackTrace) {
+                              // Fallback jika gambar gagal dimuat
+                              Image.asset(
+                                'assets/images/default_profile.png',
+                              ).image;
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildButton('Info', Icons.info, () {
-                                  // Aksi Info pengguna
-                                }),
-                                const SizedBox(width: 8),
-                                _buildButton('Chat', Icons.chat, () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/chat/${user['name']!.toLowerCase().replaceAll(' ', '-')}',
-                                  );
-                                }),
+                                Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color(0xFF218BCF),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    _buildButton('Info', Icons.info, () {
+                                      // Aksi Info pengguna
+                                    }),
+                                    const SizedBox(width: 8),
+                                    _buildButton('Chat', Icons.chat, () {
+                                      // Navigasi ke ChatPage, kirim objek ChatUser
+                                      context.push('/chat', extra: user);
+                                    }),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -104,7 +147,10 @@ class KonsultasiPetugasPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
+        currentIndex:
+            1, // Sesuaikan dengan index Konsultasi di bottom nav petugas
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.black45,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.chat_outlined), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
@@ -113,6 +159,12 @@ class KonsultasiPetugasPage extends StatelessWidget {
             label: '',
           ),
         ],
+        onTap: (index) {
+          // (Opsional) Tambahkan navigasi berdasarkan index
+          // if (index == 0) context.go('/konsultasi-petugas'); // Ini sudah halaman konsultasi
+          // if (index == 1) context.go('/home-petugas');
+          // if (index == 2) context.go('/komunitas');
+        },
       ),
     );
   }

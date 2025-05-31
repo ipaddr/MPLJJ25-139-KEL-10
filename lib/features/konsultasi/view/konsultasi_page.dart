@@ -1,33 +1,14 @@
+// lib/features/konsultasi/view/konsultasi_page.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import 'package:giziku/models/chat_user.dart'; // Import model ChatUser
 
 class KonsultasiPage extends StatelessWidget {
   const KonsultasiPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> ahliGiziList = [
-      {
-        'name': 'Dr. Samuel John, Sp.GK.',
-        'specialist': 'Spesialis Gizi Klinis',
-        'image': 'assets/images/dr_samuel.png',
-      },
-      {
-        'name': 'Dr. Daniel Putra, Sp.GK.',
-        'specialist': 'Spesialis Gizi Klinis',
-        'image': 'assets/images/dr_daniel.png',
-      },
-      {
-        'name': 'Dr. Annisa Irena, Sp.GK.',
-        'specialist': 'Spesialis Gizi Klinis',
-        'image': 'assets/images/dr_annisa.png',
-      },
-      {
-        'name': 'Dr. Jelita Ginna, Sp.GK.',
-        'specialist': 'Spesialis Gizi Klinis',
-        'image': 'assets/images/dr_jelita.png',
-      },
-    ];
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -68,98 +49,136 @@ class KonsultasiPage extends StatelessWidget {
                     style: TextStyle(color: Color(0xFF218BCF)),
                   ),
                 ),
+                // Tambahkan filter lain di sini jika diperlukan (misalnya status online)
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: ahliGiziList.length,
-              itemBuilder: (context, index) {
-                final dokter = ahliGiziList[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FB),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .where(
+                        'role',
+                        isEqualTo: 'Petugas',
+                      ) // Filter hanya Petugas
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text('Tidak ada ahli gizi tersedia.'),
+                  );
+                }
+
+                final ahliGiziList =
+                    snapshot.data!.docs.map((doc) {
+                      return ChatUser.fromFirestore(doc);
+                    }).toList();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: ahliGiziList.length,
+                  itemBuilder: (context, index) {
+                    final dokter = ahliGiziList[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F9FB),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundImage: AssetImage(dokter['image']!),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 32,
+                            backgroundImage: NetworkImage(
+                              dokter.profileImageUrl,
+                            ), // Menggunakan NetworkImage
+                            onBackgroundImageError: (exception, stackTrace) {
+                              // Fallback jika gambar gagal dimuat
+                              Image.asset(
+                                'assets/images/default_profile.png',
+                              ).image;
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    dokter['name']!,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        dokter.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
                                     ),
+                                    const Icon(
+                                      Icons
+                                          .verified, // Centang biru untuk ahli gizi
+                                      size: 16,
+                                      color: Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  dokter.specialization ??
+                                      'Spesialis Gizi', // Tampilkan spesialisasi
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
                                   ),
                                 ),
-                                const Icon(
-                                  Icons.verified,
-                                  size: 16,
-                                  color: Colors.blue,
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    _buildSmallButton('Info', Icons.info, () {
+                                      // Aksi tombol Info (misalnya, tampilkan detail profil dokter)
+                                    }),
+                                    const SizedBox(width: 8),
+                                    _buildSmallButton(
+                                      'Simpan',
+                                      Icons.favorite_border,
+                                      () {
+                                        // Aksi tombol Simpan
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _buildSmallButton(
+                                      'Chat',
+                                      Icons.chat_bubble_outline,
+                                      () {
+                                        // Navigasi ke ChatPage, kirim objek ChatUser
+                                        context.push('/chat', extra: dokter);
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              dokter['specialist']!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                _buildSmallButton('Info', Icons.info, () {
-                                  // Aksi tombol Info
-                                }),
-                                const SizedBox(width: 8),
-                                _buildSmallButton(
-                                  'Simpan',
-                                  Icons.favorite_border,
-                                  () {
-                                    // Aksi tombol Simpan
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                _buildSmallButton(
-                                  'Chat',
-                                  Icons.chat_bubble_outline,
-                                  () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/chat/ahli-${index + 1}',
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),
@@ -167,17 +186,27 @@ class KonsultasiPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
+        currentIndex: 1, // Sesuaikan dengan index Konsultasi di bottom nav
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.black45,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_outlined), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_alt_outlined),
+            icon: Icon(Icons.chat_bubble_outline),
             label: '',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.menu), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: ''),
         ],
+        onTap: (index) {
+          // (Opsional) Tambahkan navigasi berdasarkan index
+          // if (index == 0) context.go('/jadwal');
+          // if (index == 1) context.go('/konsultasi'); // Ini sudah halaman konsultasi
+          // if (index == 2) context.go('/home');
+          // if (index == 3) context.go('/komunitas');
+          // if (index == 4) context.go('/riwayat');
+        },
       ),
     );
   }

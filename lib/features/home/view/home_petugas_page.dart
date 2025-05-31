@@ -1,3 +1,4 @@
+// lib/features/home/view/home_petugas_page.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,11 +40,16 @@ class HomePetugasPage extends StatelessWidget {
               children: [
                 const CircleAvatar(
                   radius: 24,
-                  backgroundImage: AssetImage('assets/images/dr_annisa.png'),
+                  backgroundImage: AssetImage(
+                    'assets/images/dr_annisa.png',
+                  ), // Pastikan gambar ini ada atau ganti dengan placeholder
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: () => context.push('/profile'),
+                  onTap:
+                      () => context.push(
+                        '/profile',
+                      ), // Navigasi ke halaman profil petugas
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -89,7 +95,10 @@ class HomePetugasPage extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.group_outlined,
                     label: 'Postingan Edukatif',
-                    onTap: () => context.push('/komunitas-petugas'),
+                    onTap:
+                        () => context.push(
+                          '/komunitas',
+                        ), // ✅ Mengarahkan langsung ke rute /komunitas
                   ),
                   _buildMenuItem(
                     icon: Icons.chat_outlined,

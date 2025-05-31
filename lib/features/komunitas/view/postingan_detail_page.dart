@@ -1,38 +1,96 @@
+// lib/features/komunitas/view/postingan_detail_page.dart
 import 'package:flutter/material.dart';
-import '../../../models/postingan.dart';
+import 'package:giziku/models/postingan.dart'; // Pastikan import model Postingan
+import 'package:intl/intl.dart'; // Untuk format tanggal
 
 class PostinganDetailPage extends StatelessWidget {
   final Postingan postingan;
-  const PostinganDetailPage({super.key, required this.postingan});
+
+  const PostinganDetailPage({required this.postingan, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final parts = postingan.konten.split('\n\n');
-    final subject = parts.first;
-    final isi = parts.sublist(1).join('\n\n');
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Konten'),
-        backgroundColor: const Color(0xFF218BCF),
+        title: const Text('Konten'), // Judul AppBar sesuai desain
+        backgroundColor: const Color(0xFF218BCF), // Warna AppBar
+        foregroundColor: Colors.white, // Warna ikon dan teks pada AppBar
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Upload: ${postingan.waktu.day} ${_bulan(postingan.waktu.month)} ${postingan.waktu.year}, ${postingan.waktu.hour}:${postingan.waktu.minute.toString().padLeft(2, '0')} WIB',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            // Header dengan nama pengirim dan waktu
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.grey.shade200,
+                  child: Text(
+                    postingan.userName[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.blueAccent,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            postingan.userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          if (postingan
+                              .isVerified) // Tampilkan centang biru jika terverifikasi
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.verified,
+                                color: Colors.blue,
+                                size: 18,
+                              ),
+                            ),
+                        ],
+                      ),
+                      Text(
+                        postingan
+                            .userRole, // Menampilkan role (misal: "Pengguna Umum" atau "Petugas")
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Text(
-              subject,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              postingan.subject, // Menggunakan properti subject langsung
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
-            Text(isi, style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 8),
+            Text(
+              // Menggunakan properti createdAt dan DateFormat dari intl
+              'Upload: ${DateFormat('dd MMMM yyyy, HH:mm').format(postingan.createdAt)} WIB',
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            ),
+            const Divider(height: 32, thickness: 1),
+            Text(
+              postingan.content, // Menggunakan properti content langsung
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
             const SizedBox(height: 24),
-            if (postingan.terverifikasi)
+            // Tampilan "Postingan Ini Terverifikasi" sesuai desain
+            if (postingan.isVerified)
               Row(
                 children: const [
                   Text(
@@ -50,24 +108,5 @@ class PostinganDetailPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _bulan(int bulan) {
-    const namaBulan = [
-      '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return namaBulan[bulan];
   }
 }

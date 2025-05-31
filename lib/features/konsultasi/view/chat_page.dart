@@ -1,15 +1,75 @@
+// lib/features/konsultasi/view/chat_page.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:giziku/models/chat_user.dart';
+import 'package:giziku/models/message.dart';
+import 'package:giziku/features/auth/services/chat_service.dart'; // Import ChatService
+import 'package:intl/intl.dart'; // Untuk format waktu
 
-class ChatPage extends StatelessWidget {
-  final String chatId;
+class ChatPage extends StatefulWidget {
+  final ChatUser recipientUser;
 
-  const ChatPage({super.key, required this.chatId});
+  const ChatPage({super.key, required this.recipientUser});
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  final TextEditingController _messageController = TextEditingController();
+  final ChatService _chatService = ChatService();
+  final ScrollController _scrollController = ScrollController();
+  User? _currentUser; // Untuk menyimpan data pengguna yang sedang login
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = _chatService.getCurrentUser();
+    // Scroll ke bawah saat keyboard muncul atau pesan baru datang
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() async {
+    if (_messageController.text.isNotEmpty) {
+      await _chatService.sendMessage(
+        widget.recipientUser.uid,
+        _messageController.text,
+      );
+      _messageController.clear();
+      _scrollToBottom(); // Scroll ke pesan terbaru setelah mengirim
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text('Anda harus login untuk mengakses chat.')),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dr. Annisa Irena, Sp.GK.'),
+        title: Text(widget.recipientUser.name),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -24,50 +84,58 @@ class ChatPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const Expanded(
-            child: Padding(padding: EdgeInsets.all(12), child: ChatBody()),
+          Expanded(
+            child: StreamBuilder<List<Message>>(
+              stream: _chatService.getMessages(
+                _currentUser!.uid,
+                widget.recipientUser.uid,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Mulai percakapan baru.'));
+                }
+
+                final messages =
+                    snapshot.data!.reversed
+                        .toList(); // Tampilkan pesan dari bawah ke atas
+
+                // Scroll ke bawah setelah pesan baru diterima
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollToBottom();
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isMe = message.senderId == _currentUser!.uid;
+                    return ChatBubble(
+                      text: message.content,
+                      time: DateFormat('HH:mm').format(message.timestamp),
+                      isMe: isMe,
+                      // showBorder: isMe, // Anda bisa aktifkan ini jika ingin border hanya untuk pesan Anda
+                    );
+                  },
+                );
+              },
+            ),
           ),
-          const TypingIndicator(),
-          const ChatInputBar(),
+          // TypingIndicator (opsional, bisa diimplementasikan nanti dengan Firestore)
+          // const TypingIndicator(),
+          ChatInputBar(
+            messageController: _messageController,
+            onSend: _sendMessage,
+          ),
         ],
       ),
-    );
-  }
-}
-
-class ChatBody extends StatelessWidget {
-  const ChatBody({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: const [
-        ChatBubble(
-          text:
-              "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          time: "09:00",
-          isMe: false,
-        ),
-        ChatBubble(
-          text:
-              "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          time: "09:30",
-          isMe: true,
-          showBorder: true,
-        ),
-        ChatBubble(
-          text:
-              "lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-          time: "09:43",
-          isMe: false,
-        ),
-        VoiceMessageBubble(time: "09:50"),
-        ChatBubble(
-          text: "lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-          time: "09:55",
-          isMe: false,
-        ),
-      ],
     );
   }
 }
@@ -76,19 +144,21 @@ class ChatBubble extends StatelessWidget {
   final String text;
   final String time;
   final bool isMe;
-  final bool showBorder;
+  final bool
+  showBorder; // Properti ini tidak digunakan di sini, tapi bisa dipertahankan
 
   const ChatBubble({
     super.key,
     required this.text,
     required this.time,
     this.isMe = false,
-    this.showBorder = false,
+    this.showBorder = false, // Properti ini tidak digunakan di sini
   });
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isMe ? Colors.white : const Color(0xFFDDF2FF);
+    final bgColor =
+        isMe ? const Color(0xFFDDF2FF) : Colors.white; // Warna bubble
     final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
     final borderRadius = BorderRadius.only(
       topLeft: const Radius.circular(16),
@@ -102,17 +172,25 @@ class ChatBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
-        constraints: const BoxConstraints(maxWidth: 280),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ), // Batasi lebar bubble
         decoration: BoxDecoration(
           color: bgColor,
-          border: showBorder ? Border.all(color: Colors.blue) : null,
           borderRadius: borderRadius,
+          border:
+              isMe
+                  ? Border.all(color: const Color(0xFF218BCF))
+                  : null, // Border untuk pesan saya
         ),
         child: Column(
           crossAxisAlignment:
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Text(text, style: const TextStyle(fontSize: 14)),
+            Text(
+              text,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
             const SizedBox(height: 4),
             Text(
               time,
@@ -125,6 +203,7 @@ class ChatBubble extends StatelessWidget {
   }
 }
 
+// VoiceMessageBubble dan TypingIndicator tetap seperti sebelumnya atau bisa dihilangkan jika tidak digunakan
 class VoiceMessageBubble extends StatelessWidget {
   final String time;
 
@@ -186,24 +265,32 @@ class TypingIndicator extends StatelessWidget {
 }
 
 class ChatInputBar extends StatelessWidget {
-  const ChatInputBar({super.key});
+  final TextEditingController messageController;
+  final VoidCallback onSend;
+
+  const ChatInputBar({
+    super.key,
+    required this.messageController,
+    required this.onSend,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
-        color: Colors.blue,
+        color: const Color(0xFF218BCF), // Warna latar belakang input bar
         child: Row(
           children: [
             const Icon(Icons.photo, color: Colors.white),
             const SizedBox(width: 8),
             Expanded(
               child: TextField(
+                controller: messageController,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  hintText: "Write Here...",
+                  hintText: "Tulis pesan...",
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
@@ -213,12 +300,16 @@ class ChatInputBar extends StatelessWidget {
                     borderSide: BorderSide.none,
                   ),
                 ),
+                onSubmitted: (_) => onSend(), // Kirim pesan saat Enter ditekan
               ),
             ),
             const SizedBox(width: 8),
             const Icon(Icons.mic, color: Colors.white),
             const SizedBox(width: 8),
-            const Icon(Icons.send, color: Colors.white),
+            IconButton(
+              icon: const Icon(Icons.send, color: Colors.white),
+              onPressed: onSend, // Kirim pesan saat tombol send ditekan
+            ),
           ],
         ),
       ),
