@@ -1,9 +1,9 @@
 // lib/features/komunitas/view/komunitas_page.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:giziku/models/postingan.dart'; // Pastikan import model Postingan
-import 'package:intl/intl.dart'; // Untuk format tanggal
+import 'package:giziku/models/postingan.dart';
+import 'package:intl/intl.dart';
 
 class KomunitasPage extends StatelessWidget {
   const KomunitasPage({super.key});
@@ -13,7 +13,7 @@ class KomunitasPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('GiziKu Komunitas'),
-        backgroundColor: const Color(0xFFEAF6FD), // Warna AppBar sesuai desain
+        backgroundColor: const Color(0xFFEAF6FD),
         elevation: 0,
         actions: [
           IconButton(
@@ -22,20 +22,14 @@ class KomunitasPage extends StatelessWidget {
               // Aksi notifikasi
             },
           ),
-          // Anda bisa menambahkan tombol lain di sini jika diperlukan
         ],
       ),
-      backgroundColor: const Color(
-        0xFFEAF6FD,
-      ), // Warna background sesuai desain
+      backgroundColor: const Color(0xFFEAF6FD),
       body: StreamBuilder<QuerySnapshot>(
         stream:
             FirebaseFirestore.instance
                 .collection('postingan')
-                .orderBy(
-                  'createdAt',
-                  descending: true,
-                ) // Urutkan berdasarkan tanggal terbaru
+                .orderBy('createdAt', descending: true)
                 .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -65,17 +59,16 @@ class KomunitasPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/buat-postingan'); // Navigasi ke halaman buat postingan
+          context.push('/buat-postingan');
         },
         backgroundColor: const Color(0xFF218BCF),
         child: const Icon(Icons.edit, color: Colors.white),
       ),
-      // BottomNavigationBar tetap seperti sebelumnya atau sesuai desain
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFFEAF6FD),
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
-        currentIndex: 3, // Sesuaikan dengan index Komunitas & Edukasi
+        currentIndex: 3,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(
@@ -87,30 +80,90 @@ class KomunitasPage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: ''),
         ],
         onTap: (index) {
-          // (Opsional) Tambahkan navigasi berdasarkan index jika ini adalah bottom nav utama
-          // Contoh:
-          // if (index == 0) context.go('/jadwal');
-          // if (index == 1) context.go('/konsultasi');
-          // if (index == 2) context.go('/home');
-          // if (index == 3) context.go('/komunitas'); // Ini sudah halaman komunitas
-          // if (index == 4) context.go('/riwayat');
+          // (Opsional) Tambahkan navigasi berdasarkan index
         },
       ),
     );
   }
 }
 
-// ───────────────────────── _PostinganCard Widget ─────────────────────────
-class _PostinganCard extends StatelessWidget {
+class _PostinganCard extends StatefulWidget {
   final Postingan postingan;
 
   const _PostinganCard({required this.postingan});
 
   @override
+  State<_PostinganCard> createState() => _PostinganCardState();
+}
+
+class _PostinganCardState extends State<_PostinganCard> {
+  String _userProfileImageUrl = 'assets/images/default_profile.png';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfileImage();
+  }
+
+  // Menggunakan didUpdateWidget untuk memperbarui gambar jika postingan berubah
+  @override
+  void didUpdateWidget(covariant _PostinganCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.postingan.userId != oldWidget.postingan.userId) {
+      _loadUserProfileImage();
+    }
+  }
+
+  Future<void> _loadUserProfileImage() async {
+    print(
+      '[KomunitasPage:_PostinganCardState] Loading image for user ID: ${widget.postingan.userId}',
+    );
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(widget.postingan.userId)
+              .get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        final imageUrl =
+            userData?['profileImageUrl'] as String? ??
+            'assets/images/default_profile.png';
+        if (mounted) {
+          setState(() {
+            _userProfileImageUrl = imageUrl;
+            print(
+              '[KomunitasPage:_PostinganCardState] Loaded image URL: $_userProfileImageUrl for user: ${widget.postingan.userName}',
+            );
+          });
+        }
+      } else {
+        print(
+          '[KomunitasPage:_PostinganCardState] User document not found for ${widget.postingan.userName}. Using default image.',
+        );
+        if (mounted) {
+          setState(() {
+            _userProfileImageUrl = 'assets/images/default_profile.png';
+          });
+        }
+      }
+    } catch (e) {
+      print(
+        '[KomunitasPage:_PostinganCardState] Error loading user profile image for ${widget.postingan.userName}: $e',
+      );
+      if (mounted) {
+        setState(() {
+          _userProfileImageUrl = 'assets/images/default_profile.png';
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/detail-postingan', extra: postingan);
+        context.push('/detail-postingan', extra: widget.postingan);
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
@@ -125,13 +178,27 @@ class _PostinganCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    // Implementasikan avatar berdasarkan user, contoh:
-                    // backgroundImage: NetworkImage(postingan.userProfilePicUrl ?? 'default_avatar.png'),
-                    backgroundColor: Colors.grey.shade200,
-                    child: Text(
-                      postingan.userName[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.blueAccent),
-                    ),
+                    // Pastikan _userProfileImageUrl adalah URL yang valid sebelum menggunakan NetworkImage
+                    backgroundImage:
+                        (_userProfileImageUrl.startsWith('http') &&
+                                Uri.tryParse(
+                                      _userProfileImageUrl,
+                                    )?.hasAbsolutePath ==
+                                    true)
+                            ? NetworkImage(_userProfileImageUrl)
+                                as ImageProvider
+                            : AssetImage(_userProfileImageUrl),
+                    onBackgroundImageError: (exception, stackTrace) {
+                      print(
+                        '[KomunitasPage:_PostinganCardState] Error loading network image for avatar: $exception',
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _userProfileImageUrl =
+                              'assets/images/default_profile.png'; // Fallback to default asset
+                        });
+                      }
+                    },
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -141,14 +208,13 @@ class _PostinganCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              postingan.userName,
+                              widget.postingan.userName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
-                            if (postingan
-                                .isVerified) // Tampilkan centang biru jika terverifikasi
+                            if (widget.postingan.isVerified)
                               const Padding(
                                 padding: EdgeInsets.only(left: 4.0),
                                 child: Icon(
@@ -161,8 +227,8 @@ class _PostinganCard extends StatelessWidget {
                         ),
                         Text(
                           DateFormat(
-                            'dd MMMM yyyy, HH:mm',
-                          ).format(postingan.createdAt),
+                            'dd MMMMyyyy, HH:mm',
+                          ).format(widget.postingan.createdAt),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -175,7 +241,7 @@ class _PostinganCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                postingan.subject,
+                widget.postingan.subject,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -185,9 +251,9 @@ class _PostinganCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                postingan.content,
+                widget.postingan.content,
                 style: const TextStyle(fontSize: 14),
-                maxLines: 3, // Tampilkan beberapa baris isi postingan
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ],

@@ -13,24 +13,22 @@ import '../../features/auth/view/login_page.dart';
 import '../../features/home/view/home_page.dart';
 import '../../features/jadwal_distribusi/view/jadwal_page.dart';
 import '../../features/konsultasi/view/konsultasi_page.dart';
-import '../../features/konsultasi/view/chat_page.dart'; // ✅ Import ChatPage
+import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
 import '../../features/riwayat/view/riwayat_page.dart';
 // import '../../features/chatbot/view/chatbot_page.dart';
 import '../../features/home/view/home_petugas_page.dart';
 import '../../features/konsultasi/view/konsultasi_petugas_page.dart';
-// import '../../features/profile/view/profile_petugas_page.dart';
 import '../../features/profile/view/profile_page.dart';
 import '../../features/profile/view/verifikasi_petugas_page.dart';
 import '../../features/komunitas/view/postingan_form_page.dart';
 import '../../features/komunitas/view/postingan_detail_page.dart';
-import 'package:giziku/models/chat_user.dart'; // ✅ Import ChatUser model
+import 'package:giziku/models/chat_user.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final initial = ref.watch(initialRouteProvider); // 👈 ambil dari provider
+  final initial = ref.watch(initialRouteProvider);
   return GoRouter(
     initialLocation: initial,
-
     routes: [
       GoRoute(
         path: '/landing',
@@ -76,11 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const KonsultasiPage(),
       ),
       GoRoute(
-        path: '/chat', // ✅ Rute chat tanpa parameter ID di path
+        path: '/chat',
         name: 'chat',
         builder: (context, state) {
-          final recipientUser =
-              state.extra as ChatUser; // ✅ Ambil objek ChatUser dari extra
+          final recipientUser = state.extra as ChatUser;
           return ChatPage(recipientUser: recipientUser);
         },
       ),
@@ -122,11 +119,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'konsultasi-petugas',
         builder: (context, state) => const KonsultasiPetugasPage(),
       ),
-      //   GoRoute(
-      //     path: '/profile-petugas',
-      //     name: 'profile-petugas',
-      //     builder: (context, state) => const ProfilePetugasPage(),
-      //   ),
       GoRoute(
         path: '/profile',
         name: 'profile',
@@ -135,7 +127,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verifikasi-petugas',
         name: 'verifikasi-petugas',
-        builder: (context, state) => const VerifikasiPetugasPage(),
+        builder:
+            (context, state) =>
+                VerifikasiPetugasPage(), // ✅ Hapus 'const' di sini
       ),
     ],
     errorBuilder:

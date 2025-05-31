@@ -1,4 +1,8 @@
+// lib/features/riwayat/view/riwayat_page.dart
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:intl/intl.dart'; // Untuk format tanggal
 
 class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
@@ -9,39 +13,30 @@ class RiwayatPage extends StatefulWidget {
 
 class _RiwayatPageState extends State<RiwayatPage> {
   bool _terbaru = true;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  User? _currentUser;
 
-  List<_RiwayatItem> items = [
-    _RiwayatItem(
-      kategori: 'Karbohidrat',
-      deskripsi: 'Beras, roti, jagung, dll.',
-      tanggal: DateTime(2025, 4, 5),
-    ),
-    _RiwayatItem(
-      kategori: 'Kalsium',
-      deskripsi: 'Susu sapi, susu kambing, susu unta, dll.',
-      tanggal: DateTime(2025, 3, 2),
-    ),
-    _RiwayatItem(
-      kategori: 'Protein',
-      deskripsi: 'Dada ayam, telor, dll',
-      tanggal: DateTime(2024, 8, 17),
-    ),
-    _RiwayatItem(
-      kategori: 'Vitamin',
-      deskripsi: 'Vitamin D, Vitamin C, Vitamin A, dll.',
-      tanggal: DateTime(2024, 6, 23),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = _auth.currentUser;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final sortedItems = [...items];
-    sortedItems.sort(
-      (a, b) =>
-          _terbaru
-              ? b.tanggal.compareTo(a.tanggal)
-              : a.tanggal.compareTo(b.tanggal),
-    );
+    if (_currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Riwayat Bantuan'),
+          backgroundColor: const Color(0xFF218BCF),
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(
+          child: Text('Anda harus login untuk melihat riwayat bantuan.'),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -56,7 +51,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Makan Siang Gratis',
+              'Makan Siang Gratis', // Ini bisa dinamis jika ada jenis bantuan lain
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -73,17 +68,59 @@ class _RiwayatPageState extends State<RiwayatPage> {
                     Icons.calendar_today_outlined,
                     color: Colors.blue,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    // Aksi untuk filter tanggal, jika diperlukan
+                  },
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Expanded(
-              child: ListView.builder(
-                itemCount: sortedItems.length,
-                itemBuilder: (context, index) {
-                  final item = sortedItems[index];
-                  return _buildRiwayatCard(item);
+              child: StreamBuilder<QuerySnapshot>(
+                stream:
+                    _firestore
+                        .collection('riwayat_bantuan')
+                        .where(
+                          'userId',
+                          isEqualTo: _currentUser!.uid,
+                        ) // Filter berdasarkan user ID
+                        .orderBy(
+                          'tanggalDistribusi',
+                          descending: _terbaru,
+                        ) // Urutkan berdasarkan pilihan
+                        .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text('Belum ada riwayat bantuan.'),
+                    );
+                  }
+
+                  final items =
+                      snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return _RiwayatItem(
+                          kategori:
+                              data['kategori'] as String? ?? 'Tidak Diketahui',
+                          deskripsi: data['deskripsi'] as String? ?? '',
+                          tanggal:
+                              (data['tanggalDistribusi'] as Timestamp).toDate(),
+                        );
+                      }).toList();
+
+                  return ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _buildRiwayatCard(item);
+                    },
+                  );
                 },
               ),
             ),
@@ -94,7 +131,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         backgroundColor: const Color(0xFFEAF6FD),
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
-        currentIndex: 4,
+        currentIndex: 4, // Sesuaikan dengan index Riwayat Bantuan
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: ''),
@@ -119,7 +156,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
       },
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? const Color(0xFF218BCF) : Colors.white,
-        side: BorderSide(color: const Color(0xFF218BCF)),
+        side: const BorderSide(color: Color(0xFF218BCF)),
       ),
       child: Text(
         label,
@@ -170,21 +207,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
   }
 
   static String _formatTanggal(DateTime date) {
-    final bulan = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return '${date.day} ${bulan[date.month - 1]} ${date.year}';
+    return DateFormat('dd MMMM yyyy').format(date);
   }
 }
 

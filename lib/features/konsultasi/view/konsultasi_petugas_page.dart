@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:giziku/models/chat_user.dart'; // Import model ChatUser
+import 'package:giziku/models/chat_user.dart';
 
 class KonsultasiPetugasPage extends StatelessWidget {
   const KonsultasiPetugasPage({super.key});
@@ -42,7 +42,6 @@ class KonsultasiPetugasPage extends StatelessWidget {
                   backgroundColor: Color(0xFFEAF7FF),
                   labelStyle: TextStyle(color: Color(0xFF218BCF)),
                 ),
-                // Tambahkan filter lain di sini jika diperlukan
               ],
             ),
           ),
@@ -51,10 +50,7 @@ class KonsultasiPetugasPage extends StatelessWidget {
               stream:
                   FirebaseFirestore.instance
                       .collection('users')
-                      .where(
-                        'role',
-                        isEqualTo: 'Pengguna Umum',
-                      ) // Filter hanya Pengguna Umum
+                      .where('role', isEqualTo: 'Pengguna Umum')
                       .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -97,14 +93,16 @@ class KonsultasiPetugasPage extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 32,
-                            backgroundImage: NetworkImage(
-                              user.profileImageUrl,
-                            ), // Menggunakan NetworkImage
+                            backgroundImage:
+                                user.profileImageUrl.startsWith('http')
+                                    ? NetworkImage(user.profileImageUrl)
+                                        as ImageProvider
+                                    : AssetImage(user.profileImageUrl),
                             onBackgroundImageError: (exception, stackTrace) {
+                              print(
+                                '[KonsultasiPetugasPage] Error loading image for ${user.name}: $exception',
+                              );
                               // Fallback jika gambar gagal dimuat
-                              Image.asset(
-                                'assets/images/default_profile.png',
-                              ).image;
                             },
                           ),
                           const SizedBox(width: 12),
@@ -128,7 +126,6 @@ class KonsultasiPetugasPage extends StatelessWidget {
                                     }),
                                     const SizedBox(width: 8),
                                     _buildButton('Chat', Icons.chat, () {
-                                      // Navigasi ke ChatPage, kirim objek ChatUser
                                       context.push('/chat', extra: user);
                                     }),
                                   ],
@@ -147,8 +144,7 @@ class KonsultasiPetugasPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex:
-            1, // Sesuaikan dengan index Konsultasi di bottom nav petugas
+        currentIndex: 1,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
         items: const [
@@ -161,9 +157,6 @@ class KonsultasiPetugasPage extends StatelessWidget {
         ],
         onTap: (index) {
           // (Opsional) Tambahkan navigasi berdasarkan index
-          // if (index == 0) context.go('/konsultasi-petugas'); // Ini sudah halaman konsultasi
-          // if (index == 1) context.go('/home-petugas');
-          // if (index == 2) context.go('/komunitas');
         },
       ),
     );

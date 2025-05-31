@@ -1,3 +1,4 @@
+// lib/features/auth/services/auth_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -34,6 +35,7 @@ class AuthService {
     String? specialization,
     String? certification,
     List<String>? availableHours,
+    String? profileImageUrl, // Tambahkan ini
   }) async {
     final userCredential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -48,6 +50,9 @@ class AuthService {
       'name': name,
       'role': role,
       'registrationDate': now,
+      'profileImageUrl':
+          profileImageUrl ??
+          '', // Simpan URL gambar profil, default string kosong
     };
 
     if (role == 'Petugas') {
@@ -55,6 +60,10 @@ class AuthService {
         'specialization': specialization ?? '',
         'certification': certification ?? '',
         'availableHours': availableHours ?? [],
+        'isVerified': false, // Default false saat register petugas
+        'strUrl': null, // URL dokumen STR
+        'sipUrl': null, // URL dokumen SIP
+        'otherDocUrl': null, // URL dokumen lainnya
       });
     }
 

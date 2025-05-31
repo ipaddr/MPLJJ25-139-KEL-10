@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
-import 'package:giziku/models/chat_user.dart'; // Import model ChatUser
+import 'package:giziku/models/chat_user.dart';
 
 class KonsultasiPage extends StatelessWidget {
   const KonsultasiPage({super.key});
@@ -49,7 +49,6 @@ class KonsultasiPage extends StatelessWidget {
                     style: TextStyle(color: Color(0xFF218BCF)),
                   ),
                 ),
-                // Tambahkan filter lain di sini jika diperlukan (misalnya status online)
               ],
             ),
           ),
@@ -58,10 +57,7 @@ class KonsultasiPage extends StatelessWidget {
               stream:
                   FirebaseFirestore.instance
                       .collection('users')
-                      .where(
-                        'role',
-                        isEqualTo: 'Petugas',
-                      ) // Filter hanya Petugas
+                      .where('role', isEqualTo: 'Petugas')
                       .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -104,14 +100,16 @@ class KonsultasiPage extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 32,
-                            backgroundImage: NetworkImage(
-                              dokter.profileImageUrl,
-                            ), // Menggunakan NetworkImage
+                            backgroundImage:
+                                dokter.profileImageUrl.startsWith('http')
+                                    ? NetworkImage(dokter.profileImageUrl)
+                                        as ImageProvider
+                                    : AssetImage(dokter.profileImageUrl),
                             onBackgroundImageError: (exception, stackTrace) {
+                              print(
+                                '[KonsultasiPage] Error loading image for ${dokter.name}: $exception',
+                              );
                               // Fallback jika gambar gagal dimuat
-                              Image.asset(
-                                'assets/images/default_profile.png',
-                              ).image;
                             },
                           ),
                           const SizedBox(width: 12),
@@ -131,8 +129,7 @@ class KonsultasiPage extends StatelessWidget {
                                       ),
                                     ),
                                     const Icon(
-                                      Icons
-                                          .verified, // Centang biru untuk ahli gizi
+                                      Icons.verified,
                                       size: 16,
                                       color: Colors.blue,
                                     ),
@@ -140,8 +137,7 @@ class KonsultasiPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  dokter.specialization ??
-                                      'Spesialis Gizi', // Tampilkan spesialisasi
+                                  dokter.specialization ?? 'Spesialis Gizi',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
@@ -151,7 +147,7 @@ class KonsultasiPage extends StatelessWidget {
                                 Row(
                                   children: [
                                     _buildSmallButton('Info', Icons.info, () {
-                                      // Aksi tombol Info (misalnya, tampilkan detail profil dokter)
+                                      // Aksi tombol Info
                                     }),
                                     const SizedBox(width: 8),
                                     _buildSmallButton(
@@ -166,7 +162,6 @@ class KonsultasiPage extends StatelessWidget {
                                       'Chat',
                                       Icons.chat_bubble_outline,
                                       () {
-                                        // Navigasi ke ChatPage, kirim objek ChatUser
                                         context.push('/chat', extra: dokter);
                                       },
                                     ),
@@ -186,7 +181,7 @@ class KonsultasiPage extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // Sesuaikan dengan index Konsultasi di bottom nav
+        currentIndex: 1,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
         items: const [
@@ -201,11 +196,6 @@ class KonsultasiPage extends StatelessWidget {
         ],
         onTap: (index) {
           // (Opsional) Tambahkan navigasi berdasarkan index
-          // if (index == 0) context.go('/jadwal');
-          // if (index == 1) context.go('/konsultasi'); // Ini sudah halaman konsultasi
-          // if (index == 2) context.go('/home');
-          // if (index == 3) context.go('/komunitas');
-          // if (index == 4) context.go('/riwayat');
         },
       ),
     );

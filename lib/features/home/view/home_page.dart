@@ -1,12 +1,97 @@
+// lib/features/home/view/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String _userName = 'Pengguna';
+  String _profileImageUrl = 'assets/images/default_profile.png';
+  bool _isVerified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final user = _auth.currentUser;
+    print('[HomePage] _loadUserProfile called. Current user: ${user?.uid}');
+    if (user != null) {
+      _firestore
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen(
+            (userDoc) {
+              if (userDoc.exists) {
+                final userData = userDoc.data();
+                if (mounted) {
+                  setState(() {
+                    _userName = userData?['name'] as String? ?? 'Pengguna';
+                    _profileImageUrl =
+                        userData?['profileImageUrl'] as String? ??
+                        'assets/images/default_profile.png';
+                    _isVerified = userData?['isVerified'] as bool? ?? false;
+                    print(
+                      '[HomePage] User data updated via stream: Name=$_userName, Image=$_profileImageUrl, Verified=$_isVerified',
+                    );
+                  });
+                }
+              } else {
+                if (mounted) {
+                  setState(() {
+                    _userName = 'Pengguna Baru (Doc Not Found)';
+                    _profileImageUrl = 'assets/images/default_profile.png';
+                    _isVerified = false;
+                    print(
+                      '[HomePage] User document not found, setting default data.',
+                    );
+                  });
+                }
+              }
+            },
+            onError: (error) {
+              print(
+                '[HomePage] Error listening to user profile stream: $error',
+              );
+              if (mounted) {
+                setState(() {
+                  _userName = 'Error Loading';
+                  _profileImageUrl = 'assets/images/default_profile.png';
+                  _isVerified = false;
+                });
+              }
+            },
+          );
+    } else {
+      if (mounted) {
+        setState(() {
+          _userName = 'Tamu (Not Logged In)';
+          _profileImageUrl = 'assets/images/default_profile.png';
+          _isVerified = false;
+          print('[HomePage] No user logged in, setting default guest data.');
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print(
+      '[HomePage] Building widget. Current Name: $_userName, Image: $_profileImageUrl',
+    );
     final menuItems = [
       _MenuItem('Jadwal Distribusi', Icons.calendar_today, '/jadwal'),
       _MenuItem('Konsultasi Gizi', Icons.chat, '/konsultasi'),
@@ -31,13 +116,10 @@ class HomePage extends StatelessWidget {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Tombol Logout
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.black),
               onPressed: () => _showLogoutDialog(context),
             ),
-
-            // Nama, notifikasi, dan profil
             Row(
               children: [
                 IconButton(
@@ -53,31 +135,56 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
-                  onTap:
-                      () => context.push(
-                        '/profile',
-                      ), // ✅ Navigasi ke halaman profil
+                  onTap: () => context.push('/profile'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'Halo, Selamat Sore',
                         style: TextStyle(fontSize: 12, color: Colors.black),
                       ),
-                      Text(
-                        'Wahyu Isnan',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            _userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          if (_isVerified)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.verified,
+                                color: Colors.blue,
+                                size: 16,
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 14,
-                  backgroundImage: AssetImage('assets/images/profile.png'),
+                  backgroundImage:
+                      (_profileImageUrl.startsWith('http') &&
+                              Uri.tryParse(_profileImageUrl)?.hasAbsolutePath ==
+                                  true)
+                          ? NetworkImage(_profileImageUrl) as ImageProvider
+                          : AssetImage(_profileImageUrl),
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print(
+                      '[HomePage] Error loading network image for CircleAvatar: $exception',
+                    );
+                    if (mounted) {
+                      setState(() {
+                        _profileImageUrl = 'assets/images/default_profile.png';
+                      });
+                    }
+                  },
                 ),
               ],
             ),
@@ -103,6 +210,7 @@ class HomePage extends StatelessWidget {
                     menuItems
                         .map(
                           (item) => _MenuCard(
+                            // ✅ Tidak ada lagi super.key di sini
                             label: item.label,
                             icon: item.icon,
                             route: item.route,
@@ -154,8 +262,11 @@ class HomePage extends StatelessWidget {
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   await prefs.remove('user_role');
-                  Navigator.pop(ctx);
-                  context.go('/select-role'); // Arahkan ke halaman awal
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    Navigator.pop(ctx);
+                    context.go('/select-role');
+                  }
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Keluar'),
@@ -166,7 +277,6 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ───────────────────────── Menu Data Class ─────────────────────────
 class _MenuItem {
   final String label;
   final IconData icon;
@@ -175,17 +285,16 @@ class _MenuItem {
   _MenuItem(this.label, this.icon, this.route);
 }
 
-// ───────────────────────── Card Widget ─────────────────────────
 class _MenuCard extends StatelessWidget {
   final String label;
   final IconData icon;
   final String route;
 
+  // ✅ Hapus 'super.key' dari konstruktor
   const _MenuCard({
     required this.label,
     required this.icon,
     required this.route,
-    super.key,
   });
 
   @override

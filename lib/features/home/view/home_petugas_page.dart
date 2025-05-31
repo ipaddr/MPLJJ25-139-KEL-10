@@ -2,18 +2,135 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomePetugasPage extends StatelessWidget {
+class HomePetugasPage extends StatefulWidget {
   const HomePetugasPage({super.key});
+
+  @override
+  State<HomePetugasPage> createState() => _HomePetugasPageState();
+}
+
+class _HomePetugasPageState extends State<HomePetugasPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String _userName = 'Petugas';
+  String _profileImageUrl = 'assets/images/default_profile.png';
+  bool _isVerified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final user = _auth.currentUser;
+    print(
+      '[HomePetugasPage] _loadUserProfile called. Current user: ${user?.uid}',
+    );
+    if (user != null) {
+      _firestore
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen(
+            (userDoc) {
+              if (userDoc.exists) {
+                final userData = userDoc.data();
+                if (mounted) {
+                  setState(() {
+                    _userName = userData?['name'] as String? ?? 'Petugas';
+                    _profileImageUrl =
+                        userData?['profileImageUrl'] as String? ??
+                        'assets/images/default_profile.png';
+                    _isVerified = userData?['isVerified'] as bool? ?? false;
+                    print(
+                      '[HomePetugasPage] User data updated via stream: Name=$_userName, Image=$_profileImageUrl, Verified=$_isVerified',
+                    );
+                  });
+                }
+              } else {
+                if (mounted) {
+                  setState(() {
+                    _userName = 'Petugas Baru (Doc Not Found)';
+                    _profileImageUrl = 'assets/images/default_profile.png';
+                    _isVerified = false;
+                    print(
+                      '[HomePetugasPage] User document not found, setting default data.',
+                    );
+                  });
+                }
+              }
+            },
+            onError: (error) {
+              print(
+                '[HomePetugasPage] Error listening to user profile stream: $error',
+              );
+              if (mounted) {
+                setState(() {
+                  _userName = 'Error Loading';
+                  _profileImageUrl = 'assets/images/default_profile.png';
+                  _isVerified = false;
+                });
+              }
+            },
+          );
+    } else {
+      if (mounted) {
+        setState(() {
+          _userName = 'Tamu Petugas (Not Logged In)';
+          _profileImageUrl = 'assets/images/default_profile.png';
+          _isVerified = false;
+          print(
+            '[HomePetugasPage] No user logged in, setting default guest data.',
+          );
+        });
+      }
+    }
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_role');
-    context.go('/select-role');
+    await FirebaseAuth.instance.signOut();
+    if (context.mounted) {
+      context.go('/select-role');
+    }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text(
+              'Apakah Anda yakin ingin keluar dari akun ini?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await _handleLogout(context);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Keluar'),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+      '[HomePetugasPage] Building widget. Current Name: $_userName, Image: $_profileImageUrl',
+    );
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -38,18 +155,29 @@ class HomePetugasPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 24,
-                  backgroundImage: AssetImage(
-                    'assets/images/dr_annisa.png',
-                  ), // Pastikan gambar ini ada atau ganti dengan placeholder
+                  // Pastikan _profileImageUrl adalah URL yang valid sebelum menggunakan NetworkImage
+                  backgroundImage:
+                      (_profileImageUrl.startsWith('http') &&
+                              Uri.tryParse(_profileImageUrl)?.hasAbsolutePath ==
+                                  true)
+                          ? NetworkImage(_profileImageUrl) as ImageProvider
+                          : AssetImage('assets/images/default_profile.png'),
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print(
+                      '[HomePetugasPage] Error loading network image for CircleAvatar: $exception',
+                    );
+                    if (mounted) {
+                      setState(() {
+                        _profileImageUrl = 'assets/images/default_profile.png';
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap:
-                      () => context.push(
-                        '/profile',
-                      ), // Navigasi ke halaman profil petugas
+                  onTap: () => context.push('/profile'),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -58,17 +186,24 @@ class HomePetugasPage extends StatelessWidget {
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       Row(
-                        children: const [
+                        children: [
                           Text(
-                            'Dr. Annisa',
-                            style: TextStyle(
+                            _userName,
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blueAccent,
                               fontSize: 16,
                             ),
                           ),
-                          SizedBox(width: 4),
-                          Icon(Icons.verified, color: Colors.blue, size: 16),
+                          if (_isVerified)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4.0),
+                              child: Icon(
+                                Icons.verified,
+                                color: Colors.blue,
+                                size: 16,
+                              ),
+                            ),
                         ],
                       ),
                     ],
@@ -95,10 +230,7 @@ class HomePetugasPage extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.group_outlined,
                     label: 'Postingan Edukatif',
-                    onTap:
-                        () => context.push(
-                          '/komunitas',
-                        ), // ✅ Mengarahkan langsung ke rute /komunitas
+                    onTap: () => context.push('/komunitas'),
                   ),
                   _buildMenuItem(
                     icon: Icons.chat_outlined,
@@ -158,35 +290,6 @@ class HomePetugasPage extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Logout'),
-            content: const Text(
-              'Apakah Anda yakin ingin keluar dari akun ini?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.remove('user_role');
-                  Navigator.pop(ctx);
-                  context.go('/select-role');
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Keluar'),
-              ),
-            ],
-          ),
     );
   }
 }
