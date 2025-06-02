@@ -30,9 +30,9 @@ class _VerifikasiPetugasPageState extends State<VerifikasiPetugasPage> {
 
   // Cloudinary Credentials
   final String _cloudinaryCloudName =
-      'YOUR_CLOUD_NAME'; // GANTI DENGAN CLOUD NAME ANDA
+      'dpk5a9ule'; // GANTI DENGAN CLOUD NAME ANDA
   final String _cloudinaryUploadPreset =
-      'YOUR_UPLOAD_PRESET_NAME'; // GANTI DENGAN UPLOAD PRESET NAME ANDA
+      'giziku_mbg_upload'; // GANTI DENGAN UPLOAD PRESET NAME ANDA
 
   // Tambahkan field ini untuk menyimpan data profil dasar
   Map<String, dynamic>? _userData;
