@@ -27,9 +27,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Cloudinary Credentials
   final String _cloudinaryCloudName =
-      'YOUR_CLOUD_NAME'; // GANTI DENGAN CLOUD NAME ANDA
+      'dpk5a9ule'; // GANTI DENGAN CLOUD NAME ANDA
   final String _cloudinaryUploadPreset =
-      'YOUR_UPLOAD_PRESET_NAME'; // GANTI DENGAN UPLOAD PRESET NAME ANDA
+      'giziku_mbg_upload'; // GANTI DENGAN UPLOAD PRESET NAME ANDA
 
   // Controllers for editable fields
   final TextEditingController _nameController = TextEditingController();
