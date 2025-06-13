@@ -157,13 +157,12 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  // Pastikan _profileImageUrl adalah URL yang valid sebelum menggunakan NetworkImage
                   backgroundImage:
                       (_profileImageUrl.startsWith('http') &&
                               Uri.tryParse(_profileImageUrl)?.hasAbsolutePath ==
                                   true)
                           ? NetworkImage(_profileImageUrl) as ImageProvider
-                          : AssetImage('assets/images/default_profile.png'),
+                          : AssetImage(_profileImageUrl),
                   onBackgroundImageError: (exception, stackTrace) {
                     print(
                       '[HomePetugasPage] Error loading network image for CircleAvatar: $exception',
@@ -237,7 +236,14 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
                     label: 'Konsultasi Gizi',
                     onTap: () => context.push('/konsultasi-petugas'),
                   ),
-                  _buildMenuItem(label: 'Coming Soon...'),
+                  _buildMenuItem(
+                    icon: Icons.calendar_month, // ✅ Icon baru
+                    label: 'Daftar Jadwal Bantuan', // ✅ Label baru
+                    onTap:
+                        () => context.push(
+                          '/daftar-jadwal-bantuan',
+                        ), // ✅ Rute baru
+                  ),
                   _buildMenuItem(label: 'Coming Soon...'),
                 ],
               ),

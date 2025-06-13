@@ -1,8 +1,9 @@
 // lib/features/riwayat/view/riwayat_page.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:intl/intl.dart'; // Untuk format tanggal
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:giziku/models/riwayat_detail_item.dart'; // ✅ Import RiwayatDetailItem
 
 class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
@@ -51,7 +52,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Makan Siang Gratis', // Ini bisa dinamis jika ada jenis bantuan lain
+              'Makan Siang Gratis',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -80,14 +81,11 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 stream:
                     _firestore
                         .collection('riwayat_bantuan')
-                        .where(
-                          'userId',
-                          isEqualTo: _currentUser!.uid,
-                        ) // Filter berdasarkan user ID
+                        .where('userId', isEqualTo: _currentUser!.uid)
                         .orderBy(
-                          'tanggalDistribusi',
+                          'tanggalDisalurkan',
                           descending: _terbaru,
-                        ) // Urutkan berdasarkan pilihan
+                        ) // Menggunakan tanggalDisalurkan
                         .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -104,14 +102,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
 
                   final items =
                       snapshot.data!.docs.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return _RiwayatItem(
-                          kategori:
-                              data['kategori'] as String? ?? 'Tidak Diketahui',
-                          deskripsi: data['deskripsi'] as String? ?? '',
-                          tanggal:
-                              (data['tanggalDistribusi'] as Timestamp).toDate(),
-                        );
+                        return RiwayatDetailItem.fromFirestore(
+                          doc,
+                        ); // Menggunakan RiwayatDetailItem
                       }).toList();
 
                   return ListView.builder(
@@ -131,7 +124,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
         backgroundColor: const Color(0xFFEAF6FD),
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
-        currentIndex: 4, // Sesuaikan dengan index Riwayat Bantuan
+        currentIndex: 4,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: ''),
@@ -167,7 +160,8 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-  Widget _buildRiwayatCard(_RiwayatItem item) {
+  Widget _buildRiwayatCard(RiwayatDetailItem item) {
+    // Menggunakan RiwayatDetailItem
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -184,7 +178,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.kategori,
+                  item.jenisBantuan, // Menggunakan jenisBantuan
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -195,7 +189,11 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 Text(item.deskripsi),
                 const SizedBox(height: 4),
                 Text(
-                  'Terdistribusi ${_formatTanggal(item.tanggal)}',
+                  'Terdistribusi ${DateFormat('dd MMMM yyyy').format(item.tanggalDisalurkan)} oleh ${item.disalurkanOlehUserName}', // Menambahkan info petugas
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  'Lokasi: ${item.lokasiDisalurkan}', // Menambahkan lokasi
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -205,20 +203,4 @@ class _RiwayatPageState extends State<RiwayatPage> {
       ),
     );
   }
-
-  static String _formatTanggal(DateTime date) {
-    return DateFormat('dd MMMM yyyy').format(date);
-  }
-}
-
-class _RiwayatItem {
-  final String kategori;
-  final String deskripsi;
-  final DateTime tanggal;
-
-  _RiwayatItem({
-    required this.kategori,
-    required this.deskripsi,
-    required this.tanggal,
-  });
 }

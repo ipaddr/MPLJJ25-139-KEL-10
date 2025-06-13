@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:giziku/models/jadwal_item.dart'; // ✅ Import model JadwalItem
+import 'package:giziku/models/jadwal_detail_item.dart';
+import 'package:collection/collection.dart'; // Pastikan import ini ada
 
 class JadwalPage extends StatefulWidget {
   const JadwalPage({super.key});
@@ -12,10 +13,9 @@ class JadwalPage extends StatefulWidget {
 }
 
 class _JadwalPageState extends State<JadwalPage> {
-  DateTime _currentMonth = DateTime.now(); // Bulan yang ditampilkan di kalender
-  DateTime? _selectedCalendarDate; // Tanggal yang dipilih di kalender
-  JadwalItem?
-  _selectedJadwalItemDetail; // Detail jadwal untuk tanggal yang dipilih
+  DateTime _currentMonth = DateTime.now();
+  DateTime? _selectedCalendarDate;
+  JadwalDetailItem? _selectedJadwalItemDetail;
 
   final List<String> _bulanSingkat = [
     'Jan',
@@ -32,9 +32,8 @@ class _JadwalPageState extends State<JadwalPage> {
     'Des',
   ];
 
-  // List untuk menyimpan semua JadwalItem yang diambil dari Firestore
-  List<JadwalItem> _allJadwalDistribusi = [];
-  JadwalItem? _nextDistribusiItem; // Untuk "Jadwal distribusi selanjutnya"
+  List<JadwalDetailItem> _allJadwalDistribusi = [];
+  JadwalDetailItem? _nextDistribusiItem;
 
   @override
   void initState() {
@@ -47,34 +46,33 @@ class _JadwalPageState extends State<JadwalPage> {
       final querySnapshot =
           await FirebaseFirestore.instance
               .collection('jadwal_distribusi')
-              .orderBy(
-                'tanggal',
-              ) // Urutkan berdasarkan tanggal untuk memudahkan pencarian terdekat
+              .where('status', isEqualTo: 'Dijadwalkan')
+              .orderBy('tanggal')
               .get();
 
-      final List<JadwalItem> fetchedJadwal = [];
+      final List<JadwalDetailItem> fetchedJadwal = [];
       for (var doc in querySnapshot.docs) {
-        fetchedJadwal.add(JadwalItem.fromFirestore(doc));
+        fetchedJadwal.add(JadwalDetailItem.fromFirestore(doc));
       }
 
       if (mounted) {
         setState(() {
           _allJadwalDistribusi = fetchedJadwal;
-          _findNextDistribusi(); // Panggil setelah data dimuat
-          // Secara default, pilih tanggal distribusi terdekat jika ada
+          _findNextDistribusi();
           if (_nextDistribusiItem != null) {
             _selectedCalendarDate = _nextDistribusiItem!.tanggal;
             _selectedJadwalItemDetail = _nextDistribusiItem;
           } else if (_allJadwalDistribusi.isNotEmpty) {
-            // Jika tidak ada jadwal terdekat di masa depan, pilih yang pertama dari semua
             _selectedCalendarDate = _allJadwalDistribusi.first.tanggal;
             _selectedJadwalItemDetail = _allJadwalDistribusi.first;
+          } else {
+            _selectedCalendarDate = null;
+            _selectedJadwalItemDetail = null;
           }
         });
       }
     } catch (e) {
       print('Error fetching jadwal distribusi: $e');
-      // Tampilkan pesan error ke user jika perlu
     }
   }
 
@@ -83,8 +81,8 @@ class _JadwalPageState extends State<JadwalPage> {
     _nextDistribusiItem = _allJadwalDistribusi
         .where(
           (item) => item.tanggal.isAfter(now.subtract(const Duration(days: 1))),
-        ) // Filter tanggal setelah hari ini
-        .fold<JadwalItem?>(
+        )
+        .fold<JadwalDetailItem?>(
           null,
           (min, item) =>
               min == null || item.tanggal.isBefore(min.tanggal) ? item : min,
@@ -94,9 +92,10 @@ class _JadwalPageState extends State<JadwalPage> {
   void _onDateSelected(DateTime date) {
     setState(() {
       _selectedCalendarDate = date;
-      // Cari detail jadwal untuk tanggal yang dipilih
       _selectedJadwalItemDetail = _allJadwalDistribusi.firstWhereOrNull(
-        (item) => DateUtils.isSameDay(item.tanggal, date),
+        (item) =>
+            DateUtils.isSameDay(item.tanggal, date) &&
+            item.status == 'Dijadwalkan',
       );
     });
   }
@@ -115,14 +114,8 @@ class _JadwalPageState extends State<JadwalPage> {
       0,
     );
     final daysInMonth = lastDayOfMonth.day;
-    final firstWeekday =
-        firstDayOfMonth
-            .weekday; // 1 = Monday, 7 = Sunday (Dart's DateTime.weekday)
-    // Sesuaikan weekday agar Minggu menjadi terakhir (1 = Senin, ..., 7 = Minggu)
-    final adjustedFirstWeekday =
-        (firstWeekday == 7)
-            ? 0
-            : firstWeekday; // If Sunday (7), make it 0 for padding
+    final firstWeekday = firstDayOfMonth.weekday;
+    final adjustedFirstWeekday = (firstWeekday == 7) ? 0 : firstWeekday;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -132,16 +125,15 @@ class _JadwalPageState extends State<JadwalPage> {
         title: const Text('Jadwal Distribusi Bantuan'),
       ),
       body: Padding(
+        // ✅ Pastikan hanya ada satu argumen posisi di sini (padding)
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Align to start for labels
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // "Jadwal distribusi selanjutnya" bubble
-            if (_nextDistribusiItem != null)
+            if (_nextDistribusiItem !=
+                null) // ✅ 'if' statement harus langsung diikuti oleh widget
               Align(
-                // Use Align to position the bubble
-                alignment: Alignment.centerLeft, // Align left within its parent
+                alignment: Alignment.centerLeft,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -150,24 +142,22 @@ class _JadwalPageState extends State<JadwalPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    // Hapus border karena tidak ada di desain terbaru
                   ),
                   child: Text(
-                    'Jadwal distribusi selanjutnya: ${DateFormat('dd MMM yyyy').format(_nextDistribusiItem!.tanggal)}',
+                    'Jadwal distribusi selanjutnya: ${DateFormat('dd MMMMyyyy').format(_nextDistribusiItem!.tanggal)}',
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
             const SizedBox(height: 24),
 
-            // Pilih Bulan
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Pilih Bulan',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _currentMonth.month,
                   items: List.generate(12, (index) {
@@ -180,19 +170,18 @@ class _JadwalPageState extends State<JadwalPage> {
                     if (value != null) {
                       setState(() {
                         _currentMonth = DateTime(_currentMonth.year, value, 1);
+                        _selectedCalendarDate = null;
+                        _selectedJadwalItemDetail = null;
                       });
                     }
                   },
                 ),
-                // Tambahkan kontrol tahun jika diperlukan
               ],
             ),
             const SizedBox(height: 16),
 
-            // Hari-hari
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceAround, // Sesuaikan mainAxisAlignment
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: const [
                 _HariLabel('SEN'),
                 _HariLabel('SEL'),
@@ -205,43 +194,30 @@ class _JadwalPageState extends State<JadwalPage> {
             ),
             const SizedBox(height: 8),
 
-            // Kalender Tanggal
             GridView.builder(
-              shrinkWrap:
-                  true, // Penting agar GridView tidak mengambil tinggi tak terbatas
-              physics:
-                  const NeverScrollableScrollPhysics(), // Nonaktifkan scrolling GridView
-              itemCount:
-                  daysInMonth +
-                  adjustedFirstWeekday, // Jumlah kotak di kalender
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: daysInMonth + adjustedFirstWeekday,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 7,
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
               ),
               itemBuilder: (context, index) {
-                // Hitung hari yang sebenarnya
                 final day = index + 1 - adjustedFirstWeekday;
-
-                if (day <= 0) {
-                  return Container(); // Kosongkan kotak sebelum hari pertama bulan
-                }
+                if (day <= 0) return Container();
 
                 final currentDate = DateTime(
                   _currentMonth.year,
                   _currentMonth.month,
                   day,
                 );
-
-                // Periksa apakah tanggal ini ada di jadwal distribusi
                 final isDistribusi = _allJadwalDistribusi.any(
-                  (item) => DateUtils.isSameDay(item.tanggal, currentDate),
+                  (item) =>
+                      DateUtils.isSameDay(item.tanggal, currentDate) &&
+                      item.status == 'Dijadwalkan',
                 );
-
-                // Periksa apakah tanggal ini adalah hari ini
                 final isToday = DateUtils.isSameDay(currentDate, now);
-
-                // Periksa apakah tanggal ini adalah tanggal yang dipilih
                 final isSelected =
                     _selectedCalendarDate != null &&
                     DateUtils.isSameDay(currentDate, _selectedCalendarDate!);
@@ -253,12 +229,9 @@ class _JadwalPageState extends State<JadwalPage> {
                     decoration: BoxDecoration(
                       color:
                           isSelected
-                              ? Colors
-                                  .blueAccent // Warna untuk tanggal yang dipilih
+                              ? Colors.blueAccent
                               : isDistribusi
-                              ? const Color(
-                                0xFFB3DAF4,
-                              ) // Warna untuk tanggal distribusi
+                              ? const Color(0xFFB3DAF4)
                               : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
@@ -266,10 +239,7 @@ class _JadwalPageState extends State<JadwalPage> {
                       '$day',
                       style: TextStyle(
                         color:
-                            isSelected || isToday
-                                ? Colors.white
-                                : Colors
-                                    .black, // Teks putih jika dipilih atau hari ini
+                            isSelected || isToday ? Colors.white : Colors.black,
                         fontWeight:
                             isDistribusi || isSelected || isToday
                                 ? FontWeight.bold
@@ -282,15 +252,13 @@ class _JadwalPageState extends State<JadwalPage> {
             ),
             const SizedBox(height: 24),
 
-            // Detail Jadwal untuk tanggal yang dipilih
-            if (_selectedJadwalItemDetail != null)
+            if (_selectedJadwalItemDetail !=
+                null) // ✅ 'if' statement harus langsung diikuti oleh widget
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    0xFFEAF6FD,
-                  ), // Warna latar belakang sesuai desain
+                  color: const Color(0xFFEAF6FD),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -298,7 +266,7 @@ class _JadwalPageState extends State<JadwalPage> {
                   children: [
                     Text(
                       DateFormat(
-                        'dd MMMM yyyy',
+                        'dd MMMMyyyy',
                       ).format(_selectedJadwalItemDetail!.tanggal),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -320,7 +288,7 @@ class _JadwalPageState extends State<JadwalPage> {
         backgroundColor: const Color(0xFFEAF6FD),
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
-        currentIndex: 0, // Sesuaikan dengan index Jadwal Distribusi
+        currentIndex: 0,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(
@@ -333,11 +301,6 @@ class _JadwalPageState extends State<JadwalPage> {
         ],
         onTap: (index) {
           // (Opsional) Tambahkan navigasi berdasarkan index
-          // if (index == 0) context.go('/jadwal'); // Ini sudah halaman jadwal
-          // if (index == 1) context.go('/konsultasi');
-          // if (index == 2) context.go('/home');
-          // if (index == 3) context.go('/komunitas');
-          // if (index == 4) context.go('/riwayat');
         },
       ),
     );
@@ -357,15 +320,5 @@ class _HariLabel extends StatelessWidget {
         color: Color(0xFF218BCF),
       ),
     );
-  }
-}
-
-// Extension untuk memudahkan pencarian di List (opsional)
-extension IterableExtension<T> on Iterable<T> {
-  T? firstWhereOrNull(bool Function(T element) test) {
-    for (var element in this) {
-      if (test(element)) return element;
-    }
-    return null;
   }
 }
