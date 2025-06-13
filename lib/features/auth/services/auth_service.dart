@@ -53,6 +53,7 @@ class AuthService {
       'profileImageUrl':
           profileImageUrl ??
           '', // Simpan URL gambar profil, default string kosong
+      'isVerified': false, // Default false saat register petugas
     };
 
     if (role == 'Petugas') {
@@ -60,7 +61,6 @@ class AuthService {
         'specialization': specialization ?? '',
         'certification': certification ?? '',
         'availableHours': availableHours ?? [],
-        'isVerified': false, // Default false saat register petugas
         'strUrl': null, // URL dokumen STR
         'sipUrl': null, // URL dokumen SIP
         'otherDocUrl': null, // URL dokumen lainnya

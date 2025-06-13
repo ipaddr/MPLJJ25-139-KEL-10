@@ -1,10 +1,10 @@
 // lib/features/komunitas/view/postingan_form_page.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Untuk mendapatkan UID user
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
-import 'package:giziku/models/postingan.dart'; // Pastikan import model Postingan
-import 'package:shared_preferences/shared_preferences.dart'; // Untuk mendapatkan role user
+import 'package:giziku/models/postingan.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PostinganFormPage extends StatefulWidget {
   const PostinganFormPage({super.key});
@@ -19,9 +19,11 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   String? _errorMessage;
-  String? _currentUserRole; // Untuk menyimpan role pengguna yang login
-  String? _currentUserName; // Untuk menyimpan nama pengguna yang login
-  String? _currentUserId; // Untuk menyimpan UID pengguna yang login
+  String? _currentUserRole;
+  String? _currentUserName;
+  String? _currentUserId;
+  bool _isCurrentUserVerified =
+      false; // ✅ Tambahkan ini untuk menyimpan status verifikasi pengguna
 
   @override
   void initState() {
@@ -39,14 +41,25 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
     final user = _auth.currentUser;
     if (user != null) {
       _currentUserId = user.uid;
-      final userData = await _firestore.collection('users').doc(user.uid).get();
-      if (userData.exists) {
+      try {
+        final userDataDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userDataDoc.exists) {
+          final userData = userDataDoc.data();
+          setState(() {
+            _currentUserName = userData?['name'] as String?;
+            _isCurrentUserVerified =
+                userData?['isVerified'] as bool? ??
+                false; // ✅ Ambil status isVerified
+          });
+        }
+      } catch (e) {
+        print('Error loading user profile for posting form: $e');
         setState(() {
-          _currentUserName = userData.data()?['name'] as String?;
+          _errorMessage = 'Gagal memuat info pengguna.';
         });
       }
     } else {
-      // Jika user belum login atau sesi habis, tampilkan error
       setState(() {
         _errorMessage = 'Anda harus login untuk membuat postingan.';
       });
@@ -74,19 +87,22 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
       return;
     }
 
-    // Tentukan isVerified berdasarkan role pengguna
-    final bool isVerified = (_currentUserRole == 'Petugas');
+    // ✅ Tentukan isVerified postingan berdasarkan status isVerified petugas (JIKA dia petugas)
+    // Pengguna Umum (role='Pengguna Umum') akan selalu membuat isVerified: false
+    // Petugas (role='Petugas') akan membuat isVerified: true HANYA JIKA isCurrentUserVerified
+    final bool isPostVerified =
+        (_currentUserRole == 'Petugas' && _isCurrentUserVerified);
 
     try {
       final newPostingan = Postingan(
-        id: '', // ID akan diisi oleh Firestore
+        id: '',
         userId: _currentUserId!,
         userName: _currentUserName!,
         userRole: _currentUserRole!,
         subject: _subjectController.text.trim(),
         content: _contentController.text.trim(),
         createdAt: DateTime.now(),
-        isVerified: isVerified,
+        isVerified: isPostVerified, // ✅ Gunakan logika baru ini
       );
 
       await _firestore.collection('postingan').add(newPostingan.toFirestore());
@@ -95,13 +111,13 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Postingan berhasil dikirim!')),
         );
-        context.pop(); // Kembali ke halaman sebelumnya setelah berhasil
+        context.pop();
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Gagal membuat postingan: ${e.toString()}';
       });
-      print('Error creating posting: $e'); // Debugging
+      print('Error creating posting: $e');
     }
   }
 
@@ -117,26 +133,26 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Buat Postingan'),
-        backgroundColor: const Color(0xFF218BCF), // Warna AppBar
-        foregroundColor: Colors.white, // Warna ikon dan teks pada AppBar
+        backgroundColor: const Color(0xFF218BCF),
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // Padding disesuaikan
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _subjectController,
-              maxLength: 100, // Batasan karakter untuk subjek
+              maxLength: 100,
               decoration: InputDecoration(
                 hintText: 'Isi Subjek...',
                 filled: true,
                 fillColor: const Color(0xFFEAF6FD),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8), // Border radius
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
                 ),
-                counterText: '', // Sembunyikan counter karakter
+                counterText: '',
               ),
             ),
             const SizedBox(height: 16),
@@ -144,14 +160,14 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
               child: TextField(
                 controller: _contentController,
                 expands: true,
-                maxLines: null, // Memungkinkan banyak baris
+                maxLines: null,
                 textAlignVertical: TextAlignVertical.top,
                 decoration: InputDecoration(
                   hintText: 'Isi Postingan...',
                   filled: true,
                   fillColor: const Color(0xFFEAF6FD),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8), // Border radius
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -171,11 +187,11 @@ class _PostinganFormPageState extends State<PostinganFormPage> {
               child: ElevatedButton(
                 onPressed: _submitPostingan,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF218BCF), // Warna tombol
+                  backgroundColor: const Color(0xFF218BCF),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30), // Rounded button
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 child: const Text('Posting', style: TextStyle(fontSize: 18)),
