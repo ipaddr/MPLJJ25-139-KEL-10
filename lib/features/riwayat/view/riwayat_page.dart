@@ -1,8 +1,9 @@
 // lib/features/riwayat/view/riwayat_page.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:intl/intl.dart'; // Untuk format tanggal
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:giziku/models/riwayat_detail_item.dart'; // Pastikan model ini diimpor
 
 class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
@@ -12,19 +13,20 @@ class RiwayatPage extends StatefulWidget {
 }
 
 class _RiwayatPageState extends State<RiwayatPage> {
-  bool _terbaru = true;
+  bool _terbaru = true; // Untuk opsi pengurutan "Terbaru" atau "Terlama"
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  User? _currentUser;
+  User? _currentUser; // Pengguna yang sedang login
 
   @override
   void initState() {
     super.initState();
-    _currentUser = _auth.currentUser;
+    _currentUser = _auth.currentUser; // Dapatkan pengguna saat ini
   }
 
   @override
   Widget build(BuildContext context) {
+    // Tampilkan pesan jika pengguna belum login
     if (_currentUser == null) {
       return Scaffold(
         appBar: AppBar(
@@ -39,7 +41,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // Warna background
       appBar: AppBar(
         title: const Text('Riwayat Bantuan'),
         backgroundColor: const Color(0xFF218BCF),
@@ -58,24 +60,25 @@ class _RiwayatPageState extends State<RiwayatPage> {
             Row(
               children: [
                 const Text('Urutkan'),
-                const SizedBox(width: 12),
-                _buildSortButton('Terbaru', true),
+                const SizedBox(height: 12),
+                _buildSortButton('Terbaru', true), // Tombol urutkan Terbaru
                 const SizedBox(width: 8),
-                _buildSortButton('Terlama', false),
-                const Spacer(),
+                _buildSortButton('Terlama', false), // Tombol urutkan Terlama
+                const Spacer(), // Memberikan ruang kosong
                 IconButton(
                   icon: const Icon(
-                    Icons.calendar_today_outlined,
+                    Icons.calendar_today_outlined, // Ikon kalender
                     color: Colors.blue,
                   ),
                   onPressed: () {
-                    // Aksi untuk filter tanggal, jika diperlukan
+                    // Aksi untuk filter tanggal, jika diperlukan (misal: membuka date picker)
                   },
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Expanded(
+              // StreamBuilder untuk mendengarkan perubahan data riwayat secara real-time
               child: StreamBuilder<QuerySnapshot>(
                 stream:
                     _firestore
@@ -83,42 +86,42 @@ class _RiwayatPageState extends State<RiwayatPage> {
                         .where(
                           'userId',
                           isEqualTo: _currentUser!.uid,
-                        ) // Filter berdasarkan user ID
+                        ) // Filter berdasarkan user ID yang login
                         .orderBy(
-                          'tanggalDistribusi',
+                          'tanggalDisalurkan',
                           descending: _terbaru,
-                        ) // Urutkan berdasarkan pilihan
-                        .snapshots(),
+                        ) // Urutkan berdasarkan pilihan pengguna
+                        .snapshots(), // Mendengarkan perubahan data secara real-time
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    ); // Tampilkan loading
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    ); // Tampilkan error
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Center(
                       child: Text('Belum ada riwayat bantuan.'),
-                    );
+                    ); // Pesan jika tidak ada data
                   }
 
+                  // Konversi DocumentSnapshot menjadi list RiwayatDetailItem
                   final items =
                       snapshot.data!.docs.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return _RiwayatItem(
-                          kategori:
-                              data['kategori'] as String? ?? 'Tidak Diketahui',
-                          deskripsi: data['deskripsi'] as String? ?? '',
-                          tanggal:
-                              (data['tanggalDistribusi'] as Timestamp).toDate(),
-                        );
+                        return RiwayatDetailItem.fromFirestore(doc);
                       }).toList();
 
                   return ListView.builder(
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      return _buildRiwayatCard(item);
+                      return _buildRiwayatCard(
+                        item,
+                      ); // Membangun setiap card riwayat
                     },
                   );
                 },
@@ -127,11 +130,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
           ],
         ),
       ),
+      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFFEAF6FD),
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black45,
-        currentIndex: 4, // Sesuaikan dengan index Riwayat Bantuan
+        currentIndex: 4, // Sesuaikan dengan index Riwayat Bantuan di bottom nav
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: ''),
@@ -140,18 +144,24 @@ class _RiwayatPageState extends State<RiwayatPage> {
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: ''),
         ],
         onTap: (index) {
-          // Tambahkan navigasi jika diperlukan
+          // (Opsional) Tambahkan navigasi berdasarkan index jika ini adalah bottom nav utama
+          // if (index == 0) context.go('/jadwal');
+          // if (index == 1) context.go('/konsultasi');
+          // if (index == 2) context.go('/home');
+          // if (index == 3) context.go('/komunitas');
+          // if (index == 4) context.go('/riwayat'); // Sudah di halaman ini
         },
       ),
     );
   }
 
+  // Widget untuk tombol pengurutan "Terbaru" / "Terlama"
   Widget _buildSortButton(String label, bool value) {
     final isSelected = _terbaru == value;
     return OutlinedButton(
       onPressed: () {
         setState(() {
-          _terbaru = value;
+          _terbaru = value; // Mengubah state pengurutan
         });
       },
       style: OutlinedButton.styleFrom(
@@ -167,7 +177,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
     );
   }
 
-  Widget _buildRiwayatCard(_RiwayatItem item) {
+  // Widget untuk menampilkan setiap item riwayat bantuan
+  Widget _buildRiwayatCard(RiwayatDetailItem item) {
+    // Menggunakan RiwayatDetailItem
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -177,14 +189,18 @@ class _RiwayatPageState extends State<RiwayatPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.receipt_long, color: Color(0xFF218BCF), size: 28),
+          const Icon(
+            Icons.receipt_long,
+            color: Color(0xFF218BCF),
+            size: 28,
+          ), // Ikon penerimaan
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.kategori,
+                  item.jenisBantuan, // Subject bantuan dari jadwal
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -192,10 +208,14 @@ class _RiwayatPageState extends State<RiwayatPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(item.deskripsi),
+                Text(item.deskripsiTambahan), // Deskripsi bantuan
                 const SizedBox(height: 4),
                 Text(
-                  'Terdistribusi ${_formatTanggal(item.tanggal)}',
+                  'Terdistribusi ${DateFormat('dd MMMMyyyy').format(item.tanggalDisalurkan)} oleh ${item.disalurkanOlehUserName}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  'Lokasi: ${item.lokasiDisalurkan}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -205,20 +225,4 @@ class _RiwayatPageState extends State<RiwayatPage> {
       ),
     );
   }
-
-  static String _formatTanggal(DateTime date) {
-    return DateFormat('dd MMMM yyyy').format(date);
-  }
-}
-
-class _RiwayatItem {
-  final String kategori;
-  final String deskripsi;
-  final DateTime tanggal;
-
-  _RiwayatItem({
-    required this.kategori,
-    required this.deskripsi,
-    required this.tanggal,
-  });
 }

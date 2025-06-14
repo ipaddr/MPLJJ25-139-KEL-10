@@ -16,13 +16,15 @@ import '../../features/konsultasi/view/konsultasi_page.dart';
 import '../../features/konsultasi/view/chat_page.dart';
 import '../../features/komunitas/view/komunitas_page.dart';
 import '../../features/riwayat/view/riwayat_page.dart';
-import '../../features/chatbot/view/chatbot_page.dart'; // ✅ Import ChatbotPage
+import '../../features/chatbot/view/chatbot_page.dart';
 import '../../features/home/view/home_petugas_page.dart';
 import '../../features/konsultasi/view/konsultasi_petugas_page.dart';
 import '../../features/profile/view/profile_page.dart';
 import '../../features/profile/view/verifikasi_petugas_page.dart';
 import '../../features/komunitas/view/postingan_form_page.dart';
 import '../../features/komunitas/view/postingan_detail_page.dart';
+import '../../features/jadwal_distribusi/view/jadwal_form_petugas_page.dart'; // ✅ Import halaman baru
+import '../../features/jadwal_distribusi/view/jadwal_list_petugas_page.dart'; // ✅ Import halaman baru
 import 'package:giziku/models/chat_user.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -90,7 +92,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RiwayatPage(),
       ),
       GoRoute(
-        path: '/chatbot', // ✅ Rute baru untuk chatbot
+        path: '/chatbot',
         name: 'chatbot',
         builder: (context, state) => const ChatbotPage(),
       ),
@@ -98,6 +100,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home-petugas',
         name: 'home-petugas',
         builder: (context, state) => const HomePetugasPage(),
+      ),
+      GoRoute(
+        path: '/tambah-jadwal-bantuan', // ✅ Rute baru untuk form jadwal petugas
+        name: 'tambah-jadwal-bantuan',
+        builder: (context, state) => const JadwalFormPetugasPage(),
+      ),
+      GoRoute(
+        path:
+            '/daftar-jadwal-bantuan', // ✅ Rute baru untuk daftar jadwal petugas
+        name: 'daftar-jadwal-bantuan',
+        builder: (context, state) => const JadwalListPetugasPage(),
       ),
       GoRoute(
         path: '/buat-postingan',
