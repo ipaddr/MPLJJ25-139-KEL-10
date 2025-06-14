@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:giziku/models/jadwal_detail_item.dart';
 import 'package:giziku/models/riwayat_detail_item.dart';
-import 'package:giziku/models/chat_user.dart'; // Untuk mendapatkan nama penerima
+// import 'package:giziku/models/chat_user.dart'; // Untuk mendapatkan nama penerima
 
 class JadwalListPetugasPage extends StatefulWidget {
   const JadwalListPetugasPage({super.key});
@@ -59,7 +59,7 @@ class _JadwalListPetugasPageState extends State<JadwalListPetugasPage> {
           (ctx) => AlertDialog(
             title: const Text('Konfirmasi Penyaluran'),
             content: Text(
-              'Apakah Anda yakin ingin menandai jadwal ini sebagai disalurkan?\n\nSubject: ${jadwal.jenisBantuan}\nDeskripsi: ${jadwal.deskripsiBantuan}\nLokasi: ${jadwal.lokasi}\nTanggal: ${DateFormat('dd MMMMyyyy').format(jadwal.tanggal)}',
+              'Apakah Anda yakin ingin menandai jadwal ini sebagai disalurkan?\n\nSubject: ${jadwal.jenisBantuan}\nDeskripsi: ${jadwal.deskripsiBantuan}\nLokasi: ${jadwal.lokasi}\nTanggal: ${DateFormat('dd MMMM yyyy').format(jadwal.tanggal)}',
             ),
             actions: [
               TextButton(
@@ -190,7 +190,7 @@ class _JadwalListPetugasPageState extends State<JadwalListPetugasPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DateFormat('dd MMMMyyyy').format(jadwal.tanggal),
+                        DateFormat('dd MMMM yyyy').format(jadwal.tanggal),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,

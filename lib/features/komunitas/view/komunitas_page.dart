@@ -227,7 +227,7 @@ class _PostinganCardState extends State<_PostinganCard> {
                         ),
                         Text(
                           DateFormat(
-                            'dd MMMMyyyy, HH:mm',
+                            'dd MMMM yyyy, HH:mm',
                           ).format(widget.postingan.createdAt),
                           style: TextStyle(
                             fontSize: 12,

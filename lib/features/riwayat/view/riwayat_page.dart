@@ -211,7 +211,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 Text(item.deskripsiTambahan), // Deskripsi bantuan
                 const SizedBox(height: 4),
                 Text(
-                  'Terdistribusi ${DateFormat('dd MMMMyyyy').format(item.tanggalDisalurkan)} oleh ${item.disalurkanOlehUserName}',
+                  'Terdistribusi ${DateFormat('dd MMMM yyyy').format(item.tanggalDisalurkan)} oleh ${item.disalurkanOlehUserName}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(

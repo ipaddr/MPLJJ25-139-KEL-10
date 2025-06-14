@@ -188,7 +188,7 @@ class _JadwalPageState extends State<JadwalPage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Jadwal distribusi selanjutnya: ${DateFormat('dd MMMMyyyy').format(_nextDistribusiItem!.tanggal)}',
+                    'Jadwal distribusi selanjutnya: ${DateFormat('dd MMMM yyyy').format(_nextDistribusiItem!.tanggal)}',
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -332,7 +332,7 @@ class _JadwalPageState extends State<JadwalPage> {
                   children: [
                     Text(
                       DateFormat(
-                        'dd MMMMyyyy',
+                        'dd MMMM yyyy',
                       ).format(_selectedJadwalItemDetail!.tanggal),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,

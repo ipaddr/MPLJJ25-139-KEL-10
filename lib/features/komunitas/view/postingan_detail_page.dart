@@ -156,7 +156,7 @@ class _PostinganDetailPageState extends State<PostinganDetailPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Upload: ${DateFormat('dd MMMMyyyy, HH:mm').format(widget.postingan.createdAt)} WIB',
+              'Upload: ${DateFormat('dd MMMM yyyy, HH:mm').format(widget.postingan.createdAt)} WIB',
               style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
             const Divider(height: 32, thickness: 1),

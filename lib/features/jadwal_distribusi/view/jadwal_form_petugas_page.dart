@@ -240,7 +240,7 @@ class _JadwalFormPetugasPageState extends State<JadwalFormPetugasPage> {
                           _selectedDate == null
                               ? ''
                               : DateFormat(
-                                'dd MMMMyyyy',
+                                'dd MMMM yyyy',
                               ).format(_selectedDate!),
                     ), // Format tanggal
                     labelText: 'Tanggal Distribusi',
